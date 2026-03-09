@@ -435,6 +435,8 @@ export default function ClubsManagementPage() {
                 onConfirm={confirmDelete}
                 title="حذف الفرع"
                 message="هل أنت متأكد من رغبتك في حذف هذا الفرع؟ سيؤدي ذلك لإزالة كافة بياناته وكافة المجموعات التابعة له نهائياً."
+                confirmText="نعم، حذف الفرع"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

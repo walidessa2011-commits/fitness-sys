@@ -43,7 +43,8 @@ import {
     Gift,
     Paperclip,
     FileBarChart,
-    BarChart3
+    BarChart3,
+    Target
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -84,7 +85,8 @@ const routeNames: Record<string, string> = {
     'admin': 'لوحة التحكم',
     'coaches': 'بيانات المدربين',
     'notifications': 'مركز الإشعارات',
-    'club-profile': 'بيانات المؤسسة'
+    'club-profile': 'بيانات المؤسسة',
+    'goals': 'الأهداف والملاحظات'
 };
 
 const getRouteName = (segment: string) => {
@@ -109,6 +111,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [expiryDate, setExpiryDate] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [expandedMobileMenu, setExpandedMobileMenu] = useState<string | null>(null);
+    const [themeConfig, setThemeConfig] = useState<any>(null);
 
     useEffect(() => {
         const currentUser = auth.getCurrentUser();
@@ -139,6 +144,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     if (club?.name) setClubName(club.name);
                     if (club?.logo) setClubLogo(club.logo);
                 }
+
+                // Load Smart Theme Settings
+                const rawSettings = await db.getAll('club_settings');
+                const clubSettings = rawSettings.find((s: any) => s.clubId === currentUser.clubId || s.club_id === currentUser.clubId);
+                if (clubSettings) {
+                    setThemeConfig(clubSettings);
+                }
             }
 
             const settings: any = await db.getAll('system_settings');
@@ -153,10 +165,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const handleProfileUpdate = () => loadProfile(currentUser);
         window.addEventListener('club-profile-updated', handleProfileUpdate);
 
-        // Load Dynamic Notifications
+        // Load Dynamic & Persistent Notifications
         import('@/lib/supabase').then(async ({ db }) => {
+            // Run Smart Sync first
+            const { NotificationEngine } = await import('@/lib/notifications');
+            await NotificationEngine.sync();
+
+            const dbNotifs = await db.getAll('notifications');
             const notifs = [];
 
+            // Add dynamic system alerts (not stored in DB because they are time-relative)
             if (currentUser.systemExpiryDate) {
                 const expiry = new Date(currentUser.systemExpiryDate);
                 const diffDays = Math.ceil((expiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
@@ -170,22 +188,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 }
             }
 
-            const subs = await db.getAll('subscriptions');
-            const expiringSubs = subs.filter((s: any) => {
-                const diff = Math.ceil((new Date(s.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                return diff >= 0 && diff <= 7 && s.status === 'نشط';
-            });
-            if (expiringSubs.length > 0) {
-                notifs.push({ id: 'subs', title: 'اشتراكات مقاربة للانتهاء', message: `لديك ${expiringSubs.length} اشتراك سينتهي قريباً.`, type: 'warning' });
-            }
+            // Merge with DB notifications (limit to latest 10 for the dropdown)
+            const combined = [
+                ...notifs,
+                ...dbNotifs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            ].slice(0, 10);
 
-            const invoices = await db.getAll('invoices');
-            const unpaid = invoices.filter((i: any) => i.status === 'غير مدفوعة');
-            if (unpaid.length > 0) {
-                notifs.push({ id: 'inv', title: 'فواتير غير مدفوعة', message: `يوجد ${unpaid.length} فواتير بانتظار السداد اليوم.`, type: 'error' });
-            }
-
-            setNotifications(notifs);
+            setNotifications(combined);
         });
 
         // Set license days and expiry date
@@ -253,50 +262,107 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         auth.logout();
     };
 
+
     if (!user) return null;
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 font-['Tajawal',_sans-serif]">
+            {/* Dynamic CSS Customization injected globally */}
+            {themeConfig && (
+                <style dangerouslySetInnerHTML={{
+                    __html: `
+                    :root {
+                        ${themeConfig.themeHeaderFrom ? `--theme-header-from: ${themeConfig.themeHeaderFrom};` : ''}
+                        ${themeConfig.themeHeaderTo ? `--theme-header-to: ${themeConfig.themeHeaderTo};` : ''}
+                        ${themeConfig.themeHeaderBg ? `--theme-header-bg: ${themeConfig.themeHeaderBg};` : ''}
+                        ${themeConfig.themeTableBg ? `--theme-table-bg: ${themeConfig.themeTableBg};` : ''}
+                        ${themeConfig.themeTableText ? `--theme-table-text: ${themeConfig.themeTableText};` : ''}
+                        ${themeConfig.themeButtonBg ? `--theme-btn-bg: ${themeConfig.themeButtonBg};` : ''}
+                        ${themeConfig.themeButtonText ? `--theme-btn-text: ${themeConfig.themeButtonText};` : ''}
+                    }
+
+                    /* 1. Header Overrides */
+                    ${themeConfig.themeHeaderFrom && themeConfig.themeHeaderTo ? `
+                    .bg-gradient-to-r.from-\\[\\#1e3a8a\\].to-\\[\\#2563eb\\] {
+                        background-image: linear-gradient(to right, var(--theme-header-from), var(--theme-header-to)) !important;
+                    }
+                    header.bg-\\[\\#1e40af\\], .bg-\\[\\#1e40af\\] {
+                        background-color: var(--theme-header-bg, ${themeConfig.themeHeaderFrom}) !important;
+                    }
+                    div.bg-\\[\\#1e40af\\] {
+                        background-color: var(--theme-header-bg, ${themeConfig.themeHeaderFrom}) !important;
+                    }
+                    ` : ''}
+
+                    /* 2. Table Headers Overrides */
+                    ${themeConfig.themeTableBg || themeConfig.themeTableText ? `
+                    table th, table thead tr, .table-header, th.bg-slate-50, th.bg-blue-50\\/50, th.bg-gray-50, thead {
+                        ${themeConfig.themeTableBg ? `background-color: var(--theme-table-bg) !important;` : ''}
+                        ${themeConfig.themeTableText ? `color: var(--theme-table-text) !important;` : ''}
+                        ${themeConfig.themeTableText ? `border-color: var(--theme-table-bg) !important;` : ''}
+                    }
+                    ` : ''}
+
+                    /* 3. Buttons Overrides */
+                    ${themeConfig.themeButtonBg || themeConfig.themeButtonText ? `
+                    .btn-premium.btn-premium-blue, button.bg-blue-600, button.bg-indigo-600, a.bg-blue-600, a.bg-indigo-600, .bg-blue-600, .bg-indigo-600 {
+                        ${themeConfig.themeButtonBg ? `background-color: var(--theme-btn-bg) !important;` : ''}
+                        ${themeConfig.themeButtonBg ? `background-image: none !important;` : ''}
+                        ${themeConfig.themeButtonBg ? `border-color: var(--theme-btn-bg) !important;` : ''}
+                        ${themeConfig.themeButtonText ? `color: var(--theme-btn-text) !important;` : ''}
+                    }
+                    ` : ''}
+                ` }} />
+            )}
+
             {/* Top Info Bar */}
             <div className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] h-10 flex items-center justify-between px-4 text-white text-[11px] print:hidden">
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-blue-200" />
-                        <span>{time}</span>
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                        <Calendar className="w-3.5 h-3.5 text-blue-200 shrink-0" />
+                        <span className="truncate">{time}</span>
                     </div>
                     {(user.clubId || clubName) && (
-                        <div className="flex items-center gap-1.5">
-                            <Building className="w-3.5 h-3.5 text-blue-200" />
-                            <span>{clubName || 'جاري التحميل...'}</span>
+                        <div className="hidden sm:flex items-center gap-1.5 overflow-hidden">
+                            <Building className="w-3.5 h-3.5 text-blue-200 shrink-0" />
+                            <span className="truncate">{clubName || 'جاري التحميل...'}</span>
                         </div>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-blue-200" />
-                    <span>اسم الموظف: <strong className="text-yellow-200">{user.name}</strong></span>
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <User className="w-3.5 h-3.5 text-blue-200 shrink-0" />
+                    <span className="truncate">الموظف: <strong className="text-yellow-200">{user.name}</strong></span>
                 </div>
             </div>
 
             {/* Main Toolbar / Navbar */}
             <header className="bg-[#1e40af] dark:bg-slate-900 sticky top-0 z-[100] shadow-lg flex items-stretch justify-between h-16 border-b border-white/10 print:hidden">
-                <div className="flex items-stretch">
+                <div className="flex items-stretch flex-1">
+                    {/* Mobile Hamburger - Visible on lg:hidden */}
+                    <button
+                        onClick={() => setIsMobileMenuOpen(true)}
+                        className="lg:hidden flex items-center justify-center px-4 text-blue-200 hover:text-white hover:bg-white/5 transition-colors border-l border-white/10"
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
+
                     {/* Logo */}
-                    <Link href="/admin/dashboard" className="flex items-center gap-3 px-6 border-l border-white/10 hover:bg-white/5 transition-colors">
-                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white overflow-hidden">
+                    <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 md:px-6 border-l border-white/10 hover:bg-white/5 transition-colors">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white/20 flex items-center justify-center text-white overflow-hidden shrink-0">
                             {clubLogo ? (
                                 <img src={clubLogo} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
-                                <Dumbbell className="w-6 h-6" />
+                                <Dumbbell className="w-5 h-5 md:w-6 md:h-6" />
                             )}
                         </div>
-                        <div className="hidden md:block">
-                            <div className="text-sm font-black text-white leading-tight uppercase">{clubName || programName}</div>
-                            <div className="text-[10px] text-blue-200">لوحة التحكم</div>
+                        <div className="block">
+                            <div className="text-xs md:text-sm font-black text-white leading-tight uppercase truncate max-w-[120px] md:max-w-none">{clubName || programName}</div>
+                            <div className="text-[9px] md:text-[10px] text-blue-200">لوحة التحكم</div>
                         </div>
                     </Link>
 
-                    {/* Navigation Menus */}
-                    <nav className="flex items-stretch">
+                    {/* Navigation Menus - Hidden on mobile, visible on lg:flex */}
+                    <nav className="hidden lg:flex items-stretch uppercase tracking-tight">
                         <NavMenu
                             icon={<Users className="w-5 h-5" />}
                             label="الأعضاء"
@@ -310,6 +376,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 <MenuLink href="/admin/members/subscription-report" icon={<TrendingUp className="w-4 h-4 text-emerald-500" />}>الاشتراكات (تقارير)</MenuLink>
                                 <MenuLink href="/admin/members/subscriptions" icon={<UserPlus className="w-4 h-4" />}>تسجيل الاشتراكات</MenuLink>
                                 <MenuLink href="/admin/members/subscription-types" icon={<Calendar className="w-4 h-4" />}>أنواع الاشتراكات</MenuLink>
+                                <MenuLink href="/admin/members/goals" icon={<Target className="w-4 h-4" />}>تسجيل الأهداف والملاحظات</MenuLink>
                                 <MenuLink href="/admin/members/activities" icon={<Dumbbell className="w-4 h-4" />}>الأنشطة والألعاب</MenuLink>
                                 <MenuLink href="/admin/members/subscription-prices" icon={<Wallet className="w-4 h-4" />}>قيمة الاشتراكات</MenuLink>
                             </div>
@@ -433,11 +500,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
 
                 {/* Right Action Side */}
-                <div className="flex items-stretch px-4 gap-2">
+                <div className="flex items-stretch px-2 md:px-4 gap-1 md:gap-2">
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleDarkMode}
-                        className="flex items-center justify-center w-12 text-blue-200 hover:text-white hover:bg-white/10 transition-all"
+                        className="flex items-center justify-center w-10 md:w-12 text-blue-200 hover:text-white hover:bg-white/10 transition-all"
                     >
                         {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                     </button>
@@ -449,9 +516,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 e.stopPropagation();
                                 setIsNotifOpen(!isNotifOpen);
                                 setIsAccountOpen(false);
+                                setIsMobileMenuOpen(false);
                                 setActiveMenu(null);
                             }}
-                            className="flex flex-col items-center justify-center w-16 text-blue-200 hover:text-white hover:bg-white/10 transition-all gap-1 nav-button"
+                            className="flex flex-col items-center justify-center w-12 md:w-16 text-blue-200 hover:text-white hover:bg-white/10 transition-all gap-1 nav-button"
                         >
                             <div className="relative">
                                 <Bell className="w-5 h-5" />
@@ -459,7 +527,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-[#1e40af] rounded-full"></span>
                                 )}
                             </div>
-                            <span className="text-[10px]">الإشعارات</span>
+                            <span className="text-[9px] md:text-[10px]">الإشعارات</span>
                         </button>
 
                         <AnimatePresence>
@@ -468,7 +536,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: 10 }}
-                                    className="absolute top-full left-0 w-80 bg-white dark:bg-slate-800 shadow-2xl rounded-b-2xl border border-gray-300 dark:border-slate-700 mt-1 overflow-hidden"
+                                    className="absolute top-full left-0 w-[280px] sm:w-80 bg-white dark:bg-slate-800 shadow-2xl rounded-b-2xl border border-gray-300 dark:border-slate-700 mt-1 overflow-hidden"
                                 >
                                     <div className="p-4 border-b border-gray-300 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
                                         <span className="text-xs font-black text-gray-900 dark:text-white">الإشعارات الجديدة {notifications.length > 0 && `(${notifications.length})`}</span>
@@ -508,9 +576,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 e.stopPropagation();
                                 setIsAccountOpen(!isAccountOpen);
                                 setIsNotifOpen(false);
+                                setIsMobileMenuOpen(false);
                                 setActiveMenu(null);
                             }}
-                            className="flex flex-col items-center justify-center w-16 text-blue-200 hover:text-white hover:bg-white/10 transition-all gap-1 nav-button"
+                            className="flex flex-col items-center justify-center w-12 md:w-16 text-blue-200 hover:text-white hover:bg-white/10 transition-all gap-1 nav-button"
                         >
                             <div className="w-7 h-7 rounded-full border-2 border-white/30 overflow-hidden bg-white/20">
                                 {user.avatar ? (
@@ -519,7 +588,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     <User className="w-full h-full p-1" />
                                 )}
                             </div>
-                            <span className="text-[10px]">حسابي</span>
+                            <span className="text-[9px] md:text-[10px]">حسابي</span>
                         </button>
 
                         <AnimatePresence>
@@ -633,16 +702,183 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 )}
             </AnimatePresence>
 
+            {/* Mobile Navigation Drawer */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200]"
+                        />
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed inset-y-0 right-0 w-72 sm:w-80 bg-white dark:bg-slate-900 z-[201] shadow-2xl flex flex-col font-['Tajawal',_sans-serif]"
+                        >
+                            <div className="bg-[#1e40af] p-6 text-white shrink-0 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center overflow-hidden">
+                                        {clubLogo ? <img src={clubLogo} alt="Logo" className="w-full h-full object-cover" /> : <Dumbbell className="w-6 h-6" />}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-black uppercase tracking-tight">{clubName || programName}</div>
+                                        <div className="text-[10px] text-blue-200">القائمة الرئيسية</div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                                    <XCircle className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-4 space-y-2 py-6">
+                                <MobileNavSection
+                                    id="members"
+                                    icon={<Users className="w-5 h-5" />}
+                                    label="الأعضاء"
+                                    expanded={expandedMobileMenu === 'members'}
+                                    onToggle={() => setExpandedMobileMenu(expandedMobileMenu === 'members' ? null : 'members')}
+                                    onClose={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <MenuLink href="/admin/members" icon={<Users className="w-4 h-4" />}>قائمة الأعضاء</MenuLink>
+                                    <MenuLink href="/admin/members/subscription-report" icon={<TrendingUp className="w-4 h-4 text-emerald-500" />}>الاشتراكات (تقارير)</MenuLink>
+                                    <MenuLink href="/admin/members/subscriptions" icon={<UserPlus className="w-4 h-4" />}>تسجيل الاشتراكات</MenuLink>
+                                    <MenuLink href="/admin/members/subscription-types" icon={<Calendar className="w-4 h-4" />}>أنواع الاشتراكات</MenuLink>
+                                    <MenuLink href="/admin/members/activities" icon={<Dumbbell className="w-4 h-4" />}>الأنشطة والألعاب</MenuLink>
+                                    <MenuLink href="/admin/members/subscription-prices" icon={<Wallet className="w-4 h-4" />}>قيمة الاشتراكات</MenuLink>
+                                </MobileNavSection>
+
+                                <MobileNavSection
+                                    id="tickets"
+                                    icon={<Ticket className="w-5 h-5" />}
+                                    label="التذاكر"
+                                    expanded={expandedMobileMenu === 'tickets'}
+                                    onToggle={() => setExpandedMobileMenu(expandedMobileMenu === 'tickets' ? null : 'tickets')}
+                                    onClose={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <MenuLink href="/admin/tickets" icon={<Ticket className="w-4 h-4" />}>التذاكر اليومية</MenuLink>
+                                    <MenuLink href="/admin/tickets/types" icon={<Settings className="w-4 h-4" />}>أنواع التذاكر</MenuLink>
+                                    <MenuLink href="/admin/tickets/promotions" icon={<Gift className="w-4 h-4 text-rose-500" />}>العروض الترويجية</MenuLink>
+                                    <MenuLink href="/admin/tickets/reports" icon={<TrendingUp className="w-4 h-4" />}>تقارير التذاكر</MenuLink>
+                                </MobileNavSection>
+
+                                <MobileNavSection
+                                    id="access"
+                                    icon={<DoorOpen className="w-5 h-5" />}
+                                    label="الدخول"
+                                    expanded={expandedMobileMenu === 'access'}
+                                    onToggle={() => setExpandedMobileMenu(expandedMobileMenu === 'access' ? null : 'access')}
+                                    onClose={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <MenuLink href="/admin/attendance" icon={<UserPlus className="w-4 h-4" />}>تسجيل الدخول</MenuLink>
+                                    <MenuLink href="/admin/attendance/halls" icon={<LayoutGrid className="w-4 h-4" />}>صالات الدخول</MenuLink>
+                                    <MenuLink href="/admin/attendance/lockers" icon={<LayoutGrid className="w-4 h-4" />}>إدارة الخزائن</MenuLink>
+                                    <MenuLink href="/admin/attendance/sessions" icon={<Clock className="w-4 h-4" />}>فترات الدخول</MenuLink>
+                                </MobileNavSection>
+
+                                <MobileNavSection
+                                    id="employees"
+                                    icon={<Briefcase className="w-5 h-5" />}
+                                    label="الموظفين"
+                                    expanded={expandedMobileMenu === 'employees'}
+                                    onToggle={() => setExpandedMobileMenu(expandedMobileMenu === 'employees' ? null : 'employees')}
+                                    onClose={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <MenuLink href="/admin/employees" icon={<Users className="w-4 h-4" />}>قائمة الموظفين</MenuLink>
+                                    <MenuLink href="/admin/employees/coaches" icon={<Award className="w-4 h-4" />}>بيانات المدربين</MenuLink>
+                                    <MenuLink href="/admin/employees/permissions" icon={<ShieldCheck className="w-4 h-4" />}>صلاحيات الوصول</MenuLink>
+                                </MobileNavSection>
+
+                                <MobileNavSection
+                                    id="crm"
+                                    icon={<MessageCircle className="w-5 h-5" />}
+                                    label="التواصل"
+                                    expanded={expandedMobileMenu === 'crm'}
+                                    onToggle={() => setExpandedMobileMenu(expandedMobileMenu === 'crm' ? null : 'crm')}
+                                    onClose={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <MenuLink href="/admin/crm/messages" icon={<MessageSquare className="w-4 h-4" />}>الرسائل</MenuLink>
+                                    <MenuLink href="/admin/crm/whatsapp" icon={<Smartphone className="w-4 h-4" />}>واتساب آلي</MenuLink>
+                                    <MenuLink href="/admin/crm/whatsapp-media" icon={<Paperclip className="w-4 h-4 text-green-500" />}>رسائل وسائط للواتس</MenuLink>
+                                </MobileNavSection>
+
+                                <MobileNavSection
+                                    id="reports"
+                                    icon={<BarChart3 className="w-5 h-5" />}
+                                    label="التقارير"
+                                    expanded={expandedMobileMenu === 'reports'}
+                                    onToggle={() => setExpandedMobileMenu(expandedMobileMenu === 'reports' ? null : 'reports')}
+                                    onClose={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <MenuLink href="/admin/crm/client-reports" icon={<FileBarChart className="w-4 h-4 text-blue-500" />}>تقارير العملاء والعضوية</MenuLink>
+                                    <MenuLink href="/admin/finance/reports" icon={<PieChart className="w-4 h-4" />}>تقارير الحسابات والخزينة</MenuLink>
+                                </MobileNavSection>
+
+                                <MobileNavSection
+                                    id="finance"
+                                    icon={<Wallet className="w-5 h-5" />}
+                                    label="المالية"
+                                    expanded={expandedMobileMenu === 'finance'}
+                                    onToggle={() => setExpandedMobileMenu(expandedMobileMenu === 'finance' ? null : 'finance')}
+                                    onClose={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <MenuLink href="/admin/finance/invoices" icon={<Wallet className="w-4 h-4" />}>الفواتير</MenuLink>
+                                    <MenuLink href="/admin/finance/revenues" icon={<TrendingUp className="w-4 h-4 text-emerald-500" />}>الإيرادات</MenuLink>
+                                    <MenuLink href="/admin/finance/expenses" icon={<TrendingDown className="w-4 h-4 text-rose-500" />}>المصروفات</MenuLink>
+                                </MobileNavSection>
+
+                                {(user.role === 'super_admin' || user.role === 'club_admin') && (
+                                    <MobileNavSection
+                                        id="settings"
+                                        icon={<Settings className="w-5 h-5" />}
+                                        label="النظام"
+                                        expanded={expandedMobileMenu === 'settings'}
+                                        onToggle={() => setExpandedMobileMenu(expandedMobileMenu === 'settings' ? null : 'settings')}
+                                        onClose={() => setIsMobileMenuOpen(false)}
+                                    >
+                                        <MenuLink href="/admin/club-profile" icon={<Building className="w-4 h-4" />}>بيانات المؤسسة</MenuLink>
+                                        <MenuLink href="/admin/system-settings" icon={<Zap className="w-4 h-4" />}>إعدادات النظام (الخيارات)</MenuLink>
+                                        <MenuLink href="/admin/access-devices" icon={<Cpu className="w-4 h-4" />}>إعدادات أجهزة الدخول</MenuLink>
+                                        {user.role === 'super_admin' && (
+                                            <>
+                                                <MenuLink href="/admin/settings" icon={<Settings className="w-4 h-4" />}>الإعدادات العامة لموقع</MenuLink>
+                                                <MenuLink href="/admin/clubs" icon={<Building className="w-4 h-4" />}>إدارة النوادي</MenuLink>
+                                                <MenuLink href="/admin/permissions" icon={<ShieldCheck className="w-4 h-4" />}>الصلاحيات</MenuLink>
+                                            </>
+                                        )}
+                                    </MobileNavSection>
+                                )}
+                            </div>
+
+                            <div className="p-4 border-t border-gray-100 dark:border-slate-800 shrink-0 space-y-2">
+                                <AccountLink href="/admin/profile" icon={<User className="w-4 h-4" />}>الملف الشخصي</AccountLink>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 text-xs font-black transition-all"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    <span>تسجيل الخروج</span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
             {/* Breadcrumb Bar */}
-            <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 h-10 flex items-center gap-2 overflow-x-auto text-xs whitespace-nowrap scrollbar-hide print:hidden">
-                <Link href="/admin/dashboard" className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold">
-                    <ChevronLeft className="w-3 h-3" />
+            <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 h-10 flex items-center gap-2 overflow-x-auto text-[10px] md:text-xs whitespace-nowrap scrollbar-hide print:hidden">
+                <Link href="/admin/dashboard" className="flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold shrink-0">
+                    <ChevronLeft className="w-2.5 h-2.5 md:w-3 md:h-3" />
                     <span>الرئيسية</span>
                 </Link>
                 {pathname !== '/admin/dashboard' && (
                     <>
-                        <span className="text-gray-300 dark:text-slate-700">/</span>
-                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 font-bold">
+                        <span className="text-gray-300 dark:text-slate-700 shrink-0">/</span>
+                        <div className="flex items-center gap-1.5 px-2 md:px-3 py-1 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 font-bold shrink-0">
                             <span>{getRouteName(pathname.split('/').pop() || '')}</span>
                         </div>
                     </>
@@ -650,20 +886,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
 
             {/* Main Content */}
-            <main className="pt-2 px-6 max-w-full pb-20 print:p-0 print:m-0">
+            <main className="pt-2 px-3 md:px-6 max-w-full pb-20 print:p-0 print:m-0">
                 {children}
             </main>
 
             {/* Bottom Program Footer */}
-            <footer className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-t border-gray-200 dark:border-slate-800 h-10 flex items-center px-6 z-[100] shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] print:hidden">
-                <div className="flex-1 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-600">
+            <footer className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-t border-gray-200 dark:border-slate-800 h-10 flex items-center px-4 md:px-6 z-[100] shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] print:hidden">
+                <div className="flex-1 flex items-center gap-2 overflow-hidden">
+                    <div className="w-6 h-6 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0">
                         <Dumbbell className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter">{programName}</span>
+                    <span className="text-[10px] md:text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate">{programName}</span>
                 </div>
 
-                <div className="flex-1 flex justify-center">
+                <div className="hidden md:flex flex-1 justify-center">
                     {licenseDays !== null && (
                         <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 px-5 py-1 rounded-full border border-gray-300 dark:border-slate-800 shadow-sm">
                             <div className="flex items-center gap-1.5 border-l border-gray-200 dark:border-slate-700 pl-3">
@@ -678,9 +914,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     )}
                 </div>
 
-                <div className="flex-1 flex items-center justify-end gap-2 text-gray-400 dark:text-slate-500">
-                    <Building className="w-3.5 h-3.5" />
-                    <span className="text-[10px] font-bold">{clubName || 'جاري التحميل...'}</span>
+                <div className="flex-1 flex items-center justify-end gap-1 md:gap-2 text-gray-400 dark:text-slate-500 overflow-hidden text-[9px] md:text-[10px]">
+                    <Building className="w-3 md:w-3.5 h-3 md:h-3.5 shrink-0" />
+                    <span className="font-bold truncate">{clubName || 'جاري التحميل...'}</span>
                 </div>
             </footer>
 
@@ -690,6 +926,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onConfirm={confirmLogout}
                 title="تسجيل الخروج"
                 message="هل أنت متأكد من رغبتك في تسجيل الخروج من النظام؟"
+                confirmText="نعم"
+                icon={<LogOut className="w-6 h-6 relative z-10" />}
+                variant="info"
             />
         </div>
     );
@@ -737,10 +976,41 @@ function MenuLink({ href, icon, children }: { href: string, icon: React.ReactNod
 
 function AccountLink({ href, icon, children }: { href: string, icon: React.ReactNode, children: React.ReactNode }) {
     return (
-        <Link href={href} className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 text-xs font-bold transition-all">
+        <Link href={href} onClick={() => { }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 text-xs font-black transition-all">
             <div className="text-gray-400 dark:text-slate-500">{icon}</div>
             <span>{children}</span>
         </Link>
+    );
+}
+
+function MobileNavSection({ id, icon, label, children, expanded, onToggle, onClose }: { id: string, icon: React.ReactNode, label: string, children: React.ReactNode, expanded: boolean, onToggle: () => void, onClose: () => void }) {
+    return (
+        <div className="flex flex-col gap-1">
+            <button
+                onClick={onToggle}
+                className={`flex items-center justify-between w-full p-3 rounded-2xl transition-all ${expanded ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400'}`}
+            >
+                <div className="flex items-center gap-3">
+                    <div className={`${expanded ? 'text-blue-600' : 'text-slate-400'}`}>{icon}</div>
+                    <span className="text-xs font-black">{label}</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+                {expanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden flex flex-col gap-1 pr-4"
+                    >
+                        <div onClick={onClose}>
+                            {children}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 }
 

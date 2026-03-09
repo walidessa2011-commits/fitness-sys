@@ -98,10 +98,38 @@ export default function MembersPage() {
 
     const confirmDelete = async () => {
         if (deleteId) {
-            await db.delete('members', deleteId);
-            setMembers(prev => prev.filter(m => m.id !== deleteId));
-            setIsDeleteModalOpen(false);
-            setDeleteId(null);
+            try {
+                // 1. Delete related subscriptions
+                const subs = await db.getAll('subscriptions');
+                const memberSubs = subs.filter((s: any) => s.memberId === deleteId || s.member_id === deleteId);
+                for (const sub of memberSubs) {
+                    await db.delete('subscriptions', sub.id, true);
+                }
+
+                // 2. Delete related attendance records
+                const attendance = await db.getAll('attendance');
+                const memberAtt = attendance.filter((a: any) => a.memberId === deleteId || a.member_id === deleteId);
+                for (const att of memberAtt) {
+                    await db.delete('attendance', att.id, true);
+                }
+
+                // 3. Delete related financial entries (revenues)
+                const revenues = await db.getAll('revenueEntries');
+                const memberRev = revenues.filter((r: any) => r.memberId === deleteId || r.member_id === deleteId);
+                for (const rev of memberRev) {
+                    await db.delete('revenueEntries', rev.id, true);
+                }
+
+                // 4. Finally delete the member itself
+                await db.delete('members', deleteId);
+
+                setMembers(prev => prev.filter(m => m.id !== deleteId));
+                setIsDeleteModalOpen(false);
+                setDeleteId(null);
+            } catch (error: any) {
+                console.error("Error during member deletion chain:", error);
+                alert(`خطأ أثناء الحذف: ${error.message || 'حدث خطأ غير متوقع'}`);
+            }
         }
     };
 
@@ -509,6 +537,8 @@ export default function MembersPage() {
                 onConfirm={confirmDelete}
                 title="حذف العضو"
                 message="هل أنت متأكد من رغبتك في حذف هذا العضو نهائياً؟ سيؤدي ذلك لإزالة كافة بياناته واشتراكاته وسجلاته من النظام."
+                confirmText="نعم، حذف العضو"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div >
     );

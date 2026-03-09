@@ -222,6 +222,8 @@ export default function HallsPage() {
                 onConfirm={confirmDelete}
                 title="حذف الصالة"
                 message="هل أنت متأكد من رغبتك في حذف هذه الصالة؟ سيؤدي ذلك لإزالتها نهائياً من سجلات النظام."
+                confirmText="نعم، حذف الصالة"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

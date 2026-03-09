@@ -16,7 +16,9 @@ import {
     Loader2,
     Database,
     Zap,
-    Lock
+    Lock,
+    Palette,
+    RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db, supabase } from '@/lib/supabase';
@@ -39,7 +41,14 @@ export default function SystemSettingsPage() {
         customerCodeStart: 2000,
         vatPercent: 15,
         printTwoReceipts: false,
-        receiptFooter: ''
+        receiptFooter: '',
+        themeHeaderBg: '#1e40af',
+        themeHeaderFrom: '#1e3a8a',
+        themeHeaderTo: '#2563eb',
+        themeTableBg: '#f8fafc',
+        themeTableText: '#475569',
+        themeButtonBg: '#2563eb',
+        themeButtonText: '#ffffff'
     });
 
     useEffect(() => {
@@ -95,7 +104,14 @@ export default function SystemSettingsPage() {
                     customerCodeStart: 2000,
                     vatPercent: 15,
                     printTwoReceipts: false,
-                    receiptFooter: ''
+                    receiptFooter: '',
+                    themeHeaderBg: '#1e40af',
+                    themeHeaderFrom: '#1e3a8a',
+                    themeHeaderTo: '#2563eb',
+                    themeTableBg: '#f8fafc',
+                    themeTableText: '#475569',
+                    themeButtonBg: '#2563eb',
+                    themeButtonText: '#ffffff'
                 };
 
                 try {
@@ -135,6 +151,10 @@ export default function SystemSettingsPage() {
                 const created = await db.add('club_settings', finalSettings);
                 if (created) setSettings(created);
             }
+
+            // Trigger global reload to apply theme changes instantly
+            window.dispatchEvent(new Event('club-profile-updated'));
+
             alert('تم حفظ الإعدادات بنجاح');
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -200,6 +220,41 @@ export default function SystemSettingsPage() {
                             <ToggleItem label="طباعة إيصال التذكرة طابعة POS" checked={settings.printTicketReceiptPos} onChange={(v) => setSettings((prev: any) => ({ ...prev, printTicketReceiptPos: v }))} icon={<FileText />} />
                             <ToggleItem label="طباعة الإيصال نسختين" checked={settings.printTwoReceipts} onChange={(v) => setSettings((prev: any) => ({ ...prev, printTwoReceipts: v }))} icon={<FileText />} />
                             <ToggleItem label="أجهزة الدخول - Barriers" checked={settings.entryBarriers} onChange={(v) => setSettings((prev: any) => ({ ...prev, entryBarriers: v }))} icon={<Lock />} />
+                        </div>
+                    </div>
+
+                    {/* Theme Customization Grid */}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-300 dark:border-slate-800 overflow-hidden divide-y divide-gray-400 dark:divide-slate-800 mt-4">
+                        <div className="px-5 py-3 bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Palette className="w-3.5 h-3.5 text-indigo-600" />
+                                <h3 className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-wider">المظهر العام والألوان الذكية</h3>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSettings((prev: any) => ({
+                                    ...prev,
+                                    themeHeaderFrom: '',
+                                    themeHeaderTo: '',
+                                    themeHeaderBg: '',
+                                    themeTableBg: '',
+                                    themeTableText: '',
+                                    themeButtonBg: '',
+                                    themeButtonText: ''
+                                }))}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:hover:bg-rose-900/40 rounded-lg text-[10px] font-black transition-colors"
+                            >
+                                <RefreshCw className="w-3 h-3" />
+                                إستعادة الألوان الأساسية
+                            </button>
+                        </div>
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <ColorPickerField label="لون الهيدر الأيمن" value={settings.themeHeaderFrom} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeHeaderFrom: v }))} />
+                            <ColorPickerField label="لون الهيدر الأيسر" value={settings.themeHeaderTo} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeHeaderTo: v }))} />
+                            <ColorPickerField label="لون خلفية ترويسة الجداول" value={settings.themeTableBg} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeTableBg: v }))} />
+                            <ColorPickerField label="لون خط ترويسة الجداول" value={settings.themeTableText} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeTableText: v }))} />
+                            <ColorPickerField label="لون أزرار النظام" value={settings.themeButtonBg} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeButtonBg: v }))} />
+                            <ColorPickerField label="لون خط الأزرار" value={settings.themeButtonText} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeButtonText: v }))} />
                         </div>
                     </div>
                 </div>
@@ -268,6 +323,32 @@ function InputField({ label, value, onChange, icon, type = "text" }: { label: st
                     value={value ?? ''}
                     onChange={e => onChange(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-[11px] font-black dark:text-white outline-none ring-1 ring-gray-300 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-500/30 transition-all shadow-inner"
+                />
+            </div>
+        </div>
+    );
+}
+
+function ColorPickerField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest pr-2">{label}</label>
+            <div className="flex items-center gap-2">
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 ring-1 ring-gray-300 dark:ring-slate-700 shadow-inner">
+                    <input
+                        type="color"
+                        value={value || '#ffffff'}
+                        onChange={e => onChange(e.target.value)}
+                        className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer"
+                    />
+                </div>
+                <input
+                    type="text"
+                    value={value || ''}
+                    onChange={e => onChange(e.target.value)}
+                    placeholder="#000000"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-[11px] font-black dark:text-white outline-none ring-1 ring-gray-300 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-500/30 transition-all font-mono text-left shadow-inner uppercase uppercase"
+                    dir="ltr"
                 />
             </div>
         </div>

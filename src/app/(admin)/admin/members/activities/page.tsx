@@ -299,6 +299,8 @@ export default function ActivitiesPage() {
                 onConfirm={confirmDelete}
                 title="حذف النشاط"
                 message="هل أنت متأكد من رغبتك في حذف هذا النشاط؟ سيؤدي ذلك لإزالته نهائياً من قائمة الخدمات المتاحة."
+                confirmText="نعم، حذف النشاط"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

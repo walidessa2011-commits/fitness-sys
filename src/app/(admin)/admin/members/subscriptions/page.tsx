@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/supabase';
-import { PlusCircle, Loader2, Search, UserPlus, FileText, Link2, CheckCircle2, Save, UserPlus2, Wallet, Calendar, ArrowRightLeft, CreditCard, ChevronDown, Activity, Info, Gift, Settings2, UserCog, UserCheck, Clock, Check, Shield, User, ChevronUp, MoreHorizontal, Printer, Download, Share2, X } from 'lucide-react';
+import { auth } from '@/lib/auth';
+import { PlusCircle, Loader2, Search, UserPlus, FileText, Link2, CheckCircle2, Save, UserPlus2, Wallet, Calendar, ArrowRightLeft, CreditCard, ChevronDown, Activity, Info, Gift, Settings2, UserCog, UserCheck, Clock, Check, Shield, User, ChevronUp, MoreHorizontal, Printer, Download, Share2, XCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AddMemberModal } from '@/components/members/AddMemberModal';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -50,7 +51,14 @@ export default function SubscriptionsPage() {
     const [clubSettings, setClubSettings] = useState<any>(null);
     const [clubProfile, setClubProfile] = useState<any>(null);
     const [multiPayment, setMultiPayment] = useState({ cash: 0, network: 0, transfer: 0 });
-    const [confirmConfig, setConfirmConfig] = useState({ title: '', message: '', onConfirm: () => { } });
+    const [confirmConfig, setConfirmConfig] = useState({
+        title: '',
+        message: '',
+        confirmText: '',
+        variant: 'danger' as 'danger' | 'info',
+        icon: null as React.ReactNode,
+        onConfirm: () => { }
+    });
 
     // Derived Financials
     const [financials, setFinancials] = useState({
@@ -66,6 +74,17 @@ export default function SubscriptionsPage() {
     useEffect(() => {
         loadData();
     }, []);
+
+    // Handle outside click to close dropdown menu
+    useEffect(() => {
+        const handleClickOutside = () => {
+            if (activeMenuSubId) {
+                setActiveMenuSubId(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeMenuSubId]);
 
     // Automatic Receipt Printing based on settings
     useEffect(() => {
@@ -251,6 +270,9 @@ export default function SubscriptionsPage() {
                     setConfirmConfig({
                         title: 'إيقاف الاشتراك',
                         message: 'هل أنت متأكد من إيقاف هذا الاشتراك مؤقتاً؟ سيتم تجميد أيام الاشتراك المتبقية.',
+                        confirmText: 'نعم، إيقاف مؤقت',
+                        variant: 'info',
+                        icon: <Clock className="w-6 h-6 relative z-10" />,
                         onConfirm: async () => {
                             await db.update('subscriptions', sub.id, { status: 'موقوف' });
                             await loadData();
@@ -266,6 +288,9 @@ export default function SubscriptionsPage() {
                     setConfirmConfig({
                         title: 'إلغاء الاشتراك',
                         message: 'هل أنت متأكد من طلب إرجاع (إلغاء) هذا الاشتراك؟ سيتم تغيير الحالة إلى ملغي.',
+                        confirmText: 'نعم، إلغاء الاشتراك',
+                        variant: 'danger',
+                        icon: <XCircle className="w-6 h-6 relative z-10" />,
                         onConfirm: async () => {
                             await db.update('subscriptions', sub.id, { status: 'ملغي' });
                             await loadData();
@@ -282,6 +307,7 @@ export default function SubscriptionsPage() {
                     setIsReceiptModalOpen(true);
                     break;
                 default:
+                    alert('هذا الإجراء غير مفعل حالياً وسيتم إضافته قريباً');
                     console.log('Action not implemented');
                     break;
             }
@@ -334,53 +360,132 @@ export default function SubscriptionsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 {/* Slim Sidebar - Member Selection */}
-                <div className="lg:col-span-1 space-y-4">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.2rem] p-6 shadow-sm border border-gray-300 dark:border-slate-800">
-                        <div className="flex flex-col gap-2.5">
-                            <div className="relative">
-                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <Search className="h-3.5 w-3.5 text-gray-400" />
+                <div className="lg:col-span-1 space-y-3">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 pb-3 shadow-sm border border-gray-300 dark:border-slate-800">
+                        <div className="flex flex-col gap-2 relative">
+                            {/* Trigger Button */}
+                            <div
+                                onClick={() => setShowMemberDropdown(!showMemberDropdown)}
+                                className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-slate-700 rounded-xl text-[11px] font-bold cursor-pointer flex justify-between items-center shadow-sm hover:border-indigo-400 transition-all text-indigo-700 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800/80"
+                            >
+                                <div className="flex items-center gap-1.5">
+                                    <Search className="w-3.5 h-3.5" />
+                                    <span>{selectedMember ? selectedMember.name : "من فضلك اضغط للبحث عن عميل"}</span>
                                 </div>
-                                <input
-                                    type="text"
-                                    value={memberSearch}
-                                    onChange={(e) => { setMemberSearch(e.target.value); setShowMemberDropdown(true); }}
-                                    onFocus={() => setShowMemberDropdown(true)}
-                                    placeholder="الاسم، الجوال، أو رقم الهوية..."
-                                    className="w-full pr-9 pl-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-bold outline-none ring-1 ring-gray-300 dark:ring-slate-700 focus:ring-2 focus:ring-indigo-500/30 transition-all dark:text-white shadow-inner"
-                                />
-                                {showMemberDropdown && memberSearch && (
-                                    <div className="absolute top-12 left-0 right-0 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto z-[100] divide-y divide-gray-400 dark:divide-slate-700">
-                                        {filteredMembers.length > 0 ? filteredMembers.map(m => (
-                                            <div key={m.id} onClick={() => handleSelectMember(m)} className="p-3 hover:bg-indigo-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
-                                                <div className="font-black text-xs text-slate-900 dark:text-white">{m.name}</div>
-                                                <div className="text-[10px] text-gray-400 mt-1 flex gap-2"><span>{m.phone}</span> • <span>{m.membershipNumber || m.id.substring(0, 6)}</span></div>
-                                            </div>
-                                        )) : (
-                                            <div className="p-4 text-center text-xs font-bold text-gray-400 flex items-center justify-center gap-2"><Info className="w-4 h-4" /> لا توجد نتائج</div>
-                                        )}
-                                    </div>
-                                )}
+                                <ChevronDown className={`w-4 h-4 transition-transform ${showMemberDropdown ? 'rotate-180' : ''}`} />
                             </div>
+
+                            {/* Dropdown Menu */}
+                            <AnimatePresence>
+                                {showMemberDropdown && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 5 }}
+                                        className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden flex flex-col"
+                                    >
+                                        <div className="p-2 border-b border-gray-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 sticky top-0">
+                                            <div className="relative">
+                                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                                                <input
+                                                    autoFocus
+                                                    type="text"
+                                                    value={memberSearch}
+                                                    onChange={(e) => setMemberSearch(e.target.value)}
+                                                    placeholder="ابحث بالاسم، الحرف، الهاتف، أو السجل..."
+                                                    className="w-full pr-9 pl-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-bold outline-none focus:border-indigo-500 transition-all dark:text-white"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="max-h-60 overflow-y-auto custom-scrollbar divide-y divide-gray-100 dark:divide-slate-700">
+                                            {filteredMembers.length > 0 ? filteredMembers.map(m => (
+                                                <div key={m.id} onClick={() => handleSelectMember(m)} className="p-3 hover:bg-indigo-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors flex flex-col justify-center">
+                                                    <div className="font-black text-xs text-slate-900 dark:text-white">{m.name}</div>
+                                                    <div className="text-[10px] text-gray-400 mt-1 flex gap-2"><span>{m.phone}</span> • <span>{m.membershipNumber || m.id.substring(0, 6)}</span></div>
+                                                </div>
+                                            )) : (
+                                                <div className="p-6 text-center text-xs font-bold text-gray-400 flex flex-col items-center justify-center gap-2">
+                                                    <Info className="w-5 h-5 opacity-50" />
+                                                    لا توجد نتائج مطابقة
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         {selectedMember ? (
-                            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="pt-2 border-t border-gray-200 dark:border-slate-800 mt-4 space-y-2.5">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-indigo-600 font-black text-xs border border-indigo-100 dark:border-slate-700">
-                                        {selectedMember.name.charAt(0)}
+                            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="pt-3 border-t border-gray-200 dark:border-slate-800 mt-3 space-y-3">
+                                {/* Profile Picture Area */}
+                                <div className="flex flex-col items-center justify-center">
+                                    <div className="w-14 h-14 rounded-full bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-indigo-600 font-black text-2xl border border-white dark:border-slate-900 shadow-sm overflow-hidden relative">
+                                        {selectedMember.avatar ? (
+                                            <img src={selectedMember.avatar} alt="صورة العضو" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="w-7 h-7 text-indigo-300" />
+                                        )}
+                                        {selectedMember.vip && (
+                                            <div className="absolute top-0 right-0 w-6 h-6 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center text-white">
+                                                <Shield className="w-3 h-3" />
+                                            </div>
+                                        )}
                                     </div>
-                                    <div>
-                                        <div className="text-[12px] font-black text-indigo-600 dark:text-indigo-400">{selectedMember.name}</div>
-                                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">عضو نشط منذ : {selectedMember.createdAt?.split('T')[0] || '---'}</div>
+                                    <div className="text-xs font-black text-indigo-700 dark:text-indigo-400 mt-1.5">{selectedMember.name}</div>
+                                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">عضو للآن : {(selectedMember.createdAt?.split('T')[0] || '---')}</div>
+                                </div>
+
+                                {/* Detailed Info Table */}
+                                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-slate-800 mb-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                                    <DetailRow label="رقم العضوية" value={selectedMember.membershipNumber || selectedMember.id?.substring(0, 8) || '---'} />
+                                    <DetailRow label="اسم العميل" value={selectedMember.name || '---'} />
+                                    <DetailRow label="رقم الهوية" value={selectedMember.nationalId || '---'} />
+                                    <DetailRow label="رقم الجوال" value={selectedMember.phone || '---'} />
+                                    <DetailRow label="البريد الإلكتروني" value={selectedMember.email || '---'} />
+                                    <DetailRow label="تاريخ الميلاد" value={selectedMember.birthDate || '---'} />
+                                    <DetailRow label="الجنسية" value={selectedMember.nationality || '---'} />
+                                    <DetailRow label="العنوان" value={selectedMember.address || '---'} />
+                                    <DetailRow label="عميل VIP" value={
+                                        <div className="flex items-center">
+                                            <input type="checkbox" readOnly checked={selectedMember.vip || false} className="w-3.5 h-3.5 rounded text-indigo-600 bg-gray-100 border-gray-300 outline-none" />
+                                        </div>
+                                    } />
+                                    <DetailRow label="موظف المبيعات" value={auth.getCurrentUser()?.name || 'sys admin'} color="text-gray-500" />
+                                </div>
+
+                                {/* Actions Block */}
+                                <div className="flex items-center justify-center gap-3 py-2 border-y border-gray-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                                    <button className="flex items-center gap-1.5 text-[9px] font-black text-slate-700 dark:text-gray-300 hover:text-indigo-600 transition-colors">
+                                        <FileText className="w-3 h-3" />
+                                        عرض العقد الإلكتروني
+                                    </button>
+                                    <div className="w-px h-3 bg-gray-300 dark:bg-slate-700"></div>
+                                    <button className="flex items-center gap-1.5 text-[9px] font-black text-slate-700 dark:text-gray-300 hover:text-emerald-600 transition-colors">
+                                        <Share2 className="w-3 h-3" />
+                                        إرسال العقد الإلكتروني
+                                    </button>
+                                </div>
+
+                                {/* Coupon */}
+                                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-3 rounded-xl flex flex-col items-center gap-2 relative overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.02)] mt-1.5">
+                                    <div className="w-full flex justify-between items-center mb-0.5">
+                                        <span className="text-[9px] font-black text-gray-500">كوبون خصم</span>
+                                        <Gift className="w-3.5 h-3.5 text-rose-500" />
                                     </div>
+                                    <input
+                                        type="text"
+                                        value={couponCode}
+                                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                        className="w-full text-center text-lg font-black text-amber-500 bg-transparent outline-none uppercase placeholder-gray-200 dark:placeholder-slate-700"
+                                        placeholder="TWEDUE"
+                                    />
+                                    <button className="w-full bg-[#62c130] hover:bg-[#52a826] text-white py-1.5 rounded-lg text-[10px] font-black transition-colors">
+                                        تخصيص الكوبون
+                                    </button>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <InfoField label="رقم الجوال" value={selectedMember.phone} />
-                                    <InfoField label="الهوية" value={selectedMember.nationalId || '---'} />
-                                    <InfoField label="الفرع" value={selectedMember.clubId?.substring(0, 8) || 'الرئيسي'} />
-                                    <InfoField label="VIP" value={selectedMember.vip ? 'نعم' : 'لا'} color={selectedMember.vip ? 'text-amber-500' : ''} />
-                                </div>
+
                             </motion.div>
                         ) : (
                             <div className="py-10 text-center text-[10px] font-bold text-gray-300 italic flex flex-col items-center gap-2">
@@ -423,12 +528,13 @@ export default function SubscriptionsPage() {
                                     <table className="table-display-premium">
                                         <thead className="table-header-premium">
                                             <tr>
-                                                <th className="px-4 py-2 text-right first:rounded-tr-2xl border-l border-white/5 last:border-l-0">رقم العضوية</th>
-                                                <th className="px-4 py-2 text-right border-l border-white/5 last:border-l-0">اسم المشترك</th>
-                                                <th className="px-4 py-2 text-right border-l border-white/5 last:border-l-0">نوع الاشتراك</th>
-                                                <th className="px-4 py-2 text-center border-l border-white/5 last:border-l-0">بداية الاشتراك</th>
-                                                <th className="px-4 py-2 text-center border-l border-white/5 last:border-l-0">نهاية الاشتراك</th>
-                                                <th className="px-4 py-2 text-center last:rounded-tl-2xl border-l border-white/5 last:border-l-0">الإجراءات</th>
+                                                <th className="px-2 py-1.5 text-center first:rounded-tr-2xl border-l border-white/5 w-10">الحالة</th>
+                                                <th className="px-3 py-1.5 text-right border-l border-white/5 last:border-l-0">رقم العضوية</th>
+                                                <th className="px-3 py-1.5 text-right border-l border-white/5 last:border-l-0">اسم المشترك</th>
+                                                <th className="px-3 py-1.5 text-right border-l border-white/5 last:border-l-0">نوع الاشتراك</th>
+                                                <th className="px-3 py-1.5 text-center border-l border-white/5 last:border-l-0">بداية الاشتراك</th>
+                                                <th className="px-3 py-1.5 text-center border-l border-white/5 last:border-l-0">نهاية الاشتراك</th>
+                                                <th className="px-3 py-1.5 text-center last:rounded-tl-2xl border-l border-white/5 last:border-l-0">الإجراءات</th>
                                             </tr>
                                         </thead>
 
@@ -437,10 +543,19 @@ export default function SubscriptionsPage() {
                                                 currentMemberSubs.map((sub) => (
                                                     <React.Fragment key={sub.id}>
                                                         <tr className={`table-row-premium hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors border-b border-gray-200 dark:border-slate-800 cursor-pointer ${expandedSubId === sub.id ? 'bg-cyan-50/30' : ''} ${activeMenuSubId === sub.id ? 'relative z-[110]' : ''}`} onClick={() => setExpandedSubId(expandedSubId === sub.id ? null : sub.id)}>
-
-                                                            <td className="px-6 py-2 font-black text-gray-500 border-l border-gray-100/20 last:border-l-0">{selectedMember.membershipNumber || selectedMember.id.substring(0, 6)}</td>
-                                                            <td className="px-6 py-2 text-right font-black text-slate-900 dark:text-white border-l border-gray-100/20 last:border-l-0">{selectedMember.name}</td>
-                                                            <td className="px-6 py-2 border-l border-gray-100/20 last:border-l-0">
+                                                            <td className="px-2 py-1.5 text-center border-l border-gray-100/20">
+                                                                <div className="flex justify-center items-center">
+                                                                    <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black ${sub.status === 'موقوف' ? 'bg-orange-500 text-white shadow-sm' :
+                                                                            (sub.status === 'ملغي' || (sub.endDate && sub.endDate < new Date().toISOString().split('T')[0]) ? 'bg-rose-500 text-white shadow-sm' :
+                                                                                'bg-emerald-500 text-white shadow-sm')
+                                                                        }`}>
+                                                                        {sub.status === 'موقوف' ? 'موقوف' : (sub.status === 'ملغي' || (sub.endDate && sub.endDate < new Date().toISOString().split('T')[0]) ? 'منتهي' : (sub.status || 'نشط'))}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-1.5 font-black text-gray-500 border-l border-gray-100/20 last:border-l-0">{selectedMember.membershipNumber || selectedMember.id.substring(0, 6)}</td>
+                                                            <td className="px-4 py-1.5 text-right font-black text-slate-900 dark:text-white border-l border-gray-100/20 last:border-l-0">{selectedMember.name}</td>
+                                                            <td className="px-4 py-1.5 border-l border-gray-100/20 last:border-l-0">
                                                                 <div className="flex flex-col">
                                                                     <div className="flex items-center gap-1.5">
                                                                         <span className="text-slate-900 dark:text-white font-black">{getActivityName(sub.activityId)}</span>
@@ -454,9 +569,9 @@ export default function SubscriptionsPage() {
                                                                     <span className="text-[9px] text-gray-400">{getTypeName(sub.typeId)}</span>
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-2 text-center text-gray-600 font-bold border-l border-gray-100/20 last:border-l-0">{sub.startDate}</td>
-                                                            <td className="px-6 py-2 text-center text-rose-500 font-bold border-l border-gray-100/20 last:border-l-0">{sub.endDate}</td>
-                                                            <td className="px-6 py-2 text-center border-l border-gray-100/20 last:border-l-0">
+                                                            <td className="px-4 py-1.5 text-center text-gray-600 font-bold border-l border-gray-100/20 last:border-l-0">{sub.startDate}</td>
+                                                            <td className="px-4 py-1.5 text-center text-rose-500 font-bold border-l border-gray-100/20 last:border-l-0">{sub.endDate}</td>
+                                                            <td className="px-4 py-1.5 text-center border-l border-gray-100/20 last:border-l-0">
                                                                 <div className="flex items-center justify-center gap-2">
                                                                     <div className="relative">
                                                                         <button
@@ -512,32 +627,49 @@ export default function SubscriptionsPage() {
                                                         <AnimatePresence>
                                                             {expandedSubId === sub.id && (
                                                                 <tr>
-                                                                    <td colSpan={6} className="p-0 border-none border-l border-gray-100/20 last:border-l-0">
+                                                                    <td colSpan={7} className="p-0 border-none border-l border-gray-100/20 last:border-l-0">
                                                                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                                                            <div className="p-6 bg-slate-50/50 dark:bg-slate-800/20 border-b border-gray-300 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-6" dir="rtl">
+                                                                            <div className="p-4 bg-slate-50/50 dark:bg-slate-800/20 border-b border-gray-300 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4" dir="rtl">
 
                                                                                 {/* Right Section: Subscription Details */}
-                                                                                <div className="space-y-4">
-                                                                                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-300 dark:border-slate-800 divide-y divide-gray-400 dark:divide-slate-800">
-                                                                                        <DetailRow label="تاريخ التسجيل" value={new Date(sub.createdAt).toLocaleString('en-US', { hour12: true })} />
-                                                                                        <DetailRow label="التسجيل بواسطة" value={sub.createdBy || 'وليد عيسى'} />
-                                                                                        <DetailRow label="تاريخ آخر تعديل" value="---" />
-                                                                                        <DetailRow label="التعديل بواسطة" value="---" />
+                                                                                <div className="space-y-3">
+                                                                                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-300 dark:border-slate-800 divide-y divide-gray-400 dark:divide-slate-800 shadow-sm">
+                                                                                        <DetailRow label="تاريخ التسجيل" value={sub.createdAt ? new Date(sub.createdAt).toLocaleString('en-US', { hour12: true }) : '---'} />
+                                                                                        <DetailRow label="التسجيل بواسطة" value={sub.createdBy || auth.getCurrentUser()?.name || 'مدير النظام'} />
+                                                                                        <DetailRow label="تاريخ آخر تعديل" value={sub.updatedAt ? new Date(sub.updatedAt).toLocaleString('en-US', { hour12: true }) : '---'} />
+                                                                                        <DetailRow label="التعديل بواسطة" value={sub.updatedBy || '---'} />
                                                                                         <DetailRow label="عدد مرات الحضور" value={sub.attendanceCount || 0} />
-                                                                                        <DetailRow label="حالة الاشتراك" value={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} />
-                                                                                        <DetailRow label="اشتراك قابل للإيقاف" value={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} />
+                                                                                        <DetailRow
+                                                                                            label="حالة الاشتراك"
+                                                                                            value={
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-black ${sub.status === 'نشط' ? 'bg-emerald-100 text-emerald-600' : sub.status === 'موقوف' ? 'bg-amber-100 text-amber-600' : 'bg-rose-100 text-rose-600'}`}>
+                                                                                                        {sub.status || 'نشط'}
+                                                                                                    </span>
+                                                                                                    {sub.status === 'موقوف' && (
+                                                                                                        <button
+                                                                                                            onClick={(e) => { e.stopPropagation(); handleAction(sub, 'activate'); }}
+                                                                                                            className="bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-0.5 rounded-lg shadow-sm text-[9px] font-black transition-colors"
+                                                                                                        >
+                                                                                                            تفعيل الآن
+                                                                                                        </button>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            }
+                                                                                        />
+                                                                                        <DetailRow label="اشتراك قابل للإيقاف" value={sub.status === 'نشط' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-gray-400" />} />
                                                                                         <DetailRow label="تحت إشراف المدرب" value={sub.coachId ? coaches.find(c => c.id === sub.coachId)?.name : 'غير محدد'} color="text-indigo-600" />
                                                                                     </div>
                                                                                 </div>
 
                                                                                 {/* Left Section: Financials & Days */}
-                                                                                <div className="space-y-4">
-                                                                                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-300 dark:border-slate-800 p-4 space-y-3">
-                                                                                        <div className="flex justify-between items-center text-[11px] font-black">
+                                                                                <div className="space-y-3">
+                                                                                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-300 dark:border-slate-800 p-3 space-y-2 shadow-sm">
+                                                                                        <div className="flex justify-between items-center text-[10px] font-black">
                                                                                             <span className="text-emerald-600 uppercase tracking-widest">قيمة الاشتراك</span>
                                                                                             <span className="text-slate-900 dark:text-white">{sub.basePrice}</span>
                                                                                         </div>
-                                                                                        <div className="flex justify-between items-center text-[11px] font-black">
+                                                                                        <div className="flex justify-between items-center text-[10px] font-black">
                                                                                             <span className="text-rose-500 uppercase tracking-widest">الخصم %</span>
                                                                                             <span className="text-slate-900 dark:text-white">{sub.discountPercent || (sub.promotionDiscount || 0)}</span>
                                                                                         </div>
@@ -545,7 +677,7 @@ export default function SubscriptionsPage() {
                                                                                             <span className="text-gray-400 uppercase tracking-widest">القيمة المضافة</span>
                                                                                             <span className="text-slate-900 dark:text-white font-bold">{sub.vatAmount || 0}</span>
                                                                                         </div>
-                                                                                        <div className="pt-2 border-t border-gray-200 dark:border-slate-800 flex justify-between items-center text-[12px] font-black">
+                                                                                        <div className="pt-2 border-t border-gray-200 dark:border-slate-800 flex justify-between items-center text-[11px] md:text-[12px] font-black">
                                                                                             <span className="text-emerald-600 uppercase tracking-widest">الإجمالي</span>
                                                                                             <span className="text-slate-900 dark:text-white">{sub.totalAmount}</span>
                                                                                         </div>
@@ -559,8 +691,8 @@ export default function SubscriptionsPage() {
                                                                                                 </div>
                                                                                             ))}
                                                                                         </div>
-                                                                                        <div className="p-4 bg-slate-50/50 dark:bg-slate-800/50 flex justify-center items-center">
-                                                                                            <button className="bg-white dark:bg-slate-900 border border-emerald-400 text-emerald-500 px-6 py-2 rounded-lg text-xs font-black shadow-sm hover:bg-emerald-50 transition-all">تخصيص الأكاديمية</button>
+                                                                                        <div className="p-3 bg-slate-50/50 dark:bg-slate-800/50 flex justify-center items-center">
+                                                                                            <button className="bg-white dark:bg-slate-900 border border-emerald-400 text-emerald-500 px-5 py-1.5 rounded-lg text-[10px] md:text-xs font-black shadow-sm hover:bg-emerald-50 transition-all">تخصيص الأكاديمية</button>
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
@@ -574,7 +706,7 @@ export default function SubscriptionsPage() {
                                                     </React.Fragment>
                                                 ))
                                             ) : (
-                                                <tr><td colSpan={6} className="py-14 text-center text-gray-300 italic opacity-60 border-l border-gray-100/20 last:border-l-0">لا توجد بيانات اشتراك سجلت سابقاً لهذا العميل</td></tr>
+                                                <tr><td colSpan={7} className="py-14 text-center text-gray-300 italic opacity-60 border-l border-gray-100/20 last:border-l-0">لا توجد بيانات اشتراك سجلت سابقاً لهذا العميل</td></tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -582,13 +714,13 @@ export default function SubscriptionsPage() {
                             </div>
                         </>
                     ) : (
-                        <div className="h-[500px] flex flex-col items-center justify-center bg-slate-50/30 dark:bg-slate-900/30 rounded-[2.5rem] border-2 border-dashed border-gray-300 dark:border-slate-800/50">
-                            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-4 text-center max-w-xs">
-                                <div className="w-20 h-20 rounded-[2rem] bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-indigo-200 dark:text-slate-700 shadow-inner">
-                                    <Search className="w-8 h-8" />
+                        <div className="h-[400px] flex flex-col items-center justify-center bg-slate-50/30 dark:bg-slate-900/30 rounded-3xl border-2 border-dashed border-gray-300 dark:border-slate-800/50">
+                            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-3 text-center max-w-xs">
+                                <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-indigo-200 dark:text-slate-700 shadow-inner">
+                                    <Search className="w-6 h-6" />
                                 </div>
-                                <h3 className="text-lg font-black text-gray-400 dark:text-slate-500 uppercase tracking-tighter">انتظار اختيار العميل</h3>
-                                <p className="text-xs font-bold text-gray-300 dark:text-slate-600 leading-relaxed">يرجى البحث عن العميل عن طريق الاسم أو رقم الجوال من القائمة الجانبية للبدء في إجراءات الاشتراك</p>
+                                <h3 className="text-sm font-black text-gray-400 dark:text-slate-500 uppercase tracking-tighter">انتظار اختيار العميل</h3>
+                                <p className="text-[10px] font-bold text-gray-400 dark:text-slate-600 leading-relaxed px-4">يرجى البحث عن العميل عن طريق الاسم أو رقم الجوال من القائمة الجانبية للبدء في إجراءات الاشتراك</p>
                             </motion.div>
                         </div>
                     )}
@@ -664,6 +796,9 @@ export default function SubscriptionsPage() {
                 }}
                 title={confirmConfig.title}
                 message={confirmConfig.message}
+                confirmText={confirmConfig.confirmText}
+                variant={confirmConfig.variant}
+                icon={confirmConfig.icon}
             />
 
             {/* Comprehensive Subscription Modal */}
@@ -1151,7 +1286,7 @@ function InfoField({ label, value, color = "" }: any) {
 
 function DetailRow({ label, value, color = "text-slate-900 dark:text-white" }: any) {
     return (
-        <div className="flex justify-between items-center p-3 text-[11px] font-bold">
+        <div className="flex justify-between items-center px-3 py-1.5 text-[10px] md:text-[11px] font-bold">
             <span className="text-gray-400">{label}</span>
             <span className={color}>{value}</span>
         </div>

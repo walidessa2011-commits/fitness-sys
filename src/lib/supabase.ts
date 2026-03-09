@@ -253,7 +253,7 @@ export const db = {
     },
 
     // Delete record
-    delete: async (table: string, id: string) => {
+    delete: async (table: string, id: string, silent: boolean = false) => {
         const dbTable = stringToSnakeCase(table)
         // Delete locally
         const local = getLocalFallback(table)
@@ -264,9 +264,9 @@ export const db = {
             const { error } = await supabase.from(dbTable).delete().eq('id', id)
             if (error) {
                 console.warn(`Supabase ${dbTable} delete error:`, error.message)
-                alert(`خطأ في الحذف: ${error.message}`)
+                if (!silent) alert(`خطأ في الحذف: ${error.message}`)
             } else {
-                alert('تم الحذف بنجاح')
+                if (!silent) alert('تم الحذف بنجاح')
             }
             return true
         } catch (e) {
@@ -303,5 +303,44 @@ export const db = {
         if (typeof window === 'undefined') return null
         const session = JSON.parse(localStorage.getItem('fitness_club_session_v2') || '{}')
         return session.clubId || session.club_id || null
+    },
+
+    // Smart Notification System (Persistent)
+    notify: async (notif: { title: string, message: string, type?: string, category?: string, link?: string, userId?: string, clubId?: string, metadata?: any }) => {
+        const session = db.getSession()
+        const targetClubId = notif.clubId || session?.clubId || session?.club_id
+        const targetUserId = notif.userId || session?.id
+
+        if (!targetClubId) return null
+
+        const data: any = {
+            title: notif.title,
+            message: notif.message,
+            type: notif.type || 'info',
+            category: notif.category || 'system',
+            link: notif.link || null,
+            clubId: targetClubId,
+            userId: targetUserId || null,
+            isRead: false,
+            metadata: notif.metadata || {},
+            createdAt: new Date().toISOString()
+        }
+
+        // Silent add (no alert)
+        const dbTable = 'notifications'
+        try {
+            const local = getLocalFallback('notifications')
+            local.push(data)
+            saveLocalFallback('notifications', local)
+
+            const { data: remote, error } = await supabase.from(dbTable).insert([toSnakeCase(data)]).select()
+            if (error) {
+                console.warn('System Notification Sync Error:', error.message)
+                return data
+            }
+            return toCamelCase(remote[0])
+        } catch (e) {
+            return data
+        }
     }
 }

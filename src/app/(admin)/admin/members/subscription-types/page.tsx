@@ -211,6 +211,8 @@ export default function SubscriptionTypesPage() {
                 onConfirm={confirmDelete}
                 title="حذف نوع الاشتراك"
                 message="هل أنت متأكد من رغبتك في حذف هذا النوع؟ قد يؤثر ذلك على التكلفة المرتبطة بالاشتراكات القائمة."
+                confirmText="نعم، حذف النوع"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

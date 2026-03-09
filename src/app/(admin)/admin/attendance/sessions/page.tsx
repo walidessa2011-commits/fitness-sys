@@ -356,6 +356,8 @@ export default function AccessPeriodsPage() {
                 onConfirm={confirmDelete}
                 title="حذف فترة الدخول"
                 message="هل أنت متأكد من رغبتك في حذف هذه الفترة؟ قد يؤثر ذلك على المشتركين المرتبطين بها."
+                confirmText="نعم، حذف الفترة"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

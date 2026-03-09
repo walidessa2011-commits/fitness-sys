@@ -367,6 +367,8 @@ export default function TicketTypesPage() {
                 onConfirm={confirmDelete}
                 title="حذف نوع التذكرة"
                 message="هل أنت متأكد من رغبتك في حذف هذا النوع؟ لا يمكن التراجع عن هذه العملية."
+                confirmText="نعم، حذف النوع"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

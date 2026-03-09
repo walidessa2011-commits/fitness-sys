@@ -27,7 +27,8 @@ import {
     CheckCircle2,
     Building,
     FileSpreadsheet,
-    FileDown
+    FileDown,
+    Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '@/lib/supabase';
@@ -51,6 +52,7 @@ const reportTypes = [
     { id: 'id-cards-period', title: 'تقرير بطباعة كارت التعريف للمشتركين خلال فترة محددة', icon: <Printer className="w-5 h-5 text-slate-500" />, type: 'range' },
     { id: 'client-data-period', title: 'تقرير بيانات العملاء المشتركين خلال فترة محددة', icon: <FileText className="w-5 h-5 text-blue-600" />, type: 'range' },
     { id: 'attendance-activity-period', title: 'تقرير بدخول الاعضاء للانشطة خلال فترة محددة', icon: <RotateCcw className="w-5 h-5 text-emerald-600" />, type: 'range' },
+    { id: 'members-by-goal', title: 'تقرير أهداف المشتركين وعدد المسجلين في كل هدف', icon: <Target className="w-5 h-5 text-[#2ecc71]" />, type: 'none' },
 ];
 
 export default function ClientReportsPage() {
@@ -74,6 +76,7 @@ export default function ClientReportsPage() {
     const [activities, setActivities] = useState<any[]>([]);
     const [types, setTypes] = useState<any[]>([]);
     const [clubProfile, setClubProfile] = useState<any>(null);
+    const [memberGoals, setMemberGoals] = useState<any[]>([]);
 
     // Results
     const [results, setResults] = useState<any[] | null>(null);
@@ -90,17 +93,19 @@ export default function ClientReportsPage() {
         setLoading(true);
         try {
             const clubId = auth.getCurrentUser()?.clubId || (auth.getCurrentUser() as any)?.club_id;
-            const [emps, acts, subTypes, allProfiles] = await Promise.all([
+            const [emps, acts, subTypes, allProfiles, goalsData] = await Promise.all([
                 db.getAll('employees'),
                 db.getAll('activities'),
                 db.getAll('subscriptionTypes'),
-                db.getAll('club_profiles')
+                db.getAll('club_profiles'),
+                db.getAll('member_goals')
             ]);
 
             setCoaches(emps.filter((e: any) => e.role === 'coach'));
             setEmployees(emps);
             setActivities(acts);
             setTypes(subTypes);
+            setMemberGoals(goalsData || []);
             const myProfile = allProfiles?.find((p: any) => p.clubId === clubId);
             setClubProfile(myProfile || null);
         } catch (e) {
@@ -129,6 +134,23 @@ export default function ClientReportsPage() {
                     break;
                 case 'ending-subs-day':
                     data = allSubs.filter((s: any) => s.status === 'نشط' && s.endDate?.startsWith(date));
+                    break;
+                case 'members-by-goal':
+                    // Group by goal
+                    const goalStats: any[] = [];
+                    memberGoals.forEach(g => {
+                        const count = allMembers.filter((m: any) =>
+                            Array.isArray(m.goals) ? m.goals.includes(g.name) : (m.goals === g.name)
+                        ).length;
+                        goalStats.push({
+                            name: g.name,
+                            category: 'هدف تدريبي',
+                            count: count,
+                            status: g.status,
+                            createdAt: g.createdAt
+                        });
+                    });
+                    data = goalStats;
                     break;
                 default:
                     data = allMembers.slice(0, 10);
@@ -169,7 +191,8 @@ export default function ClientReportsPage() {
         'التذاكر والزيارات': reportTypes.slice(3, 5),
         'مدربي المبيعات': reportTypes.slice(5, 7),
         'الاشتراكات الفعالة': reportTypes.slice(7, 10),
-        'المواعيد والبيانات': reportTypes.slice(10),
+        'المواعيد والبيانات': reportTypes.slice(10, 14),
+        'تحليل الأهداف': reportTypes.slice(14),
     };
 
     const currentReport = reportTypes.find(r => r.id === selectedReport);
@@ -444,11 +467,19 @@ export default function ClientReportsPage() {
                                     <table className="w-full text-right border-separate border-spacing-0">
                                         <thead className="bg-indigo-600 dark:bg-indigo-700 text-white shadow-md dark: dark:/90 dark: dark: dark: dark: dark: text-[9px] font-black uppercase tracking-[0.2em]">
                                             <tr>
-                                                <th className="px-6 py-4 text-center first:rounded-tr-3xl border-l border-white/5 last:border-l-0">البيانات الأساسية للمشترك</th>
-                                                <th className="px-4 py-4 text-center border-l border-white/5 last:border-l-0">رقم الهاتف</th>
-                                                <th className="px-4 py-4 text-center border-l border-white/5 last:border-l-0">الحالة الحالية</th>
-                                                <th className="px-4 py-4 text-center border-l border-white/5 last:border-l-0">تاريخ القيد</th>
-                                                <th className="px-6 py-4 text-center last:rounded-tl-3xl border-l border-white/5 last:border-l-0">إدارة الملف</th>
+                                                <th className="px-6 py-4 text-center first:rounded-tr-3xl border-l border-white/5 last:border-l-0">
+                                                    {selectedReport === 'members-by-goal' ? 'الهدف التدريبي' : 'البيانات الأساسية للمشترك'}
+                                                </th>
+                                                <th className="px-4 py-4 text-center border-l border-white/5 last:border-l-0">
+                                                    {selectedReport === 'members-by-goal' ? 'التصنيف' : 'رقم الهاتف'}
+                                                </th>
+                                                <th className="px-4 py-4 text-center border-l border-white/5 last:border-l-0">
+                                                    {selectedReport === 'members-by-goal' ? 'عدد المسجلين' : 'الحالة الحالية'}
+                                                </th>
+                                                <th className="px-4 py-4 text-center border-l border-white/5 last:border-l-0">
+                                                    {selectedReport === 'members-by-goal' ? 'حالة الهدف' : 'تاريخ القيد'}
+                                                </th>
+                                                <th className="px-6 py-4 text-center last:rounded-tl-3xl border-l border-white/5 last:border-l-0">الإجراءات</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-400 dark:divide-slate-800/40">
@@ -457,35 +488,41 @@ export default function ClientReportsPage() {
                                                     <td className="px-6 py-2 border-l border-gray-100/20 last:border-l-0">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 font-black text-[11px] uppercase shrink-0 border border-gray-300 dark:border-slate-800 shadow-sm">
-                                                                {item.name?.substring(0, 1)}
+                                                                {selectedReport === 'members-by-goal' ? <Target className="w-5 h-5" /> : item.name?.substring(0, 1)}
                                                             </div>
                                                             <div>
                                                                 <p className="text-[11px] font-black text-slate-900 dark:text-white leading-tight">{item.name}</p>
                                                                 <p className="text-[8px] font-bold text-slate-400 flex items-center gap-1 mt-0.5">
                                                                     <LayoutGrid className="w-2.5 h-2.5" />
-                                                                    #{item.membershipNumber || '---'}
+                                                                    {selectedReport === 'members-by-goal' ? 'Goal ID' : 'Client ID'} #{String(item.id || idx + 1000).substring(0, 5)}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-2 text-center text-[10px] font-black text-slate-600 dark:text-slate-400 font-mono tracking-tighter border-l border-gray-100/20 last:border-l-0">
-                                                        {item.phone || '----------'}
+                                                    <td className="px-4 py-2 text-center text-[10px] font-black text-slate-600 dark:text-slate-400 border-l border-gray-100/20 last:border-l-0">
+                                                        {selectedReport === 'members-by-goal' ? item.category : (item.phone || '----------')}
                                                     </td>
                                                     <td className="px-4 py-2 text-center border-l border-gray-100/20 last:border-l-0">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black border ${item.status === 'نشط'
-                                                            ? 'bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 border-emerald-100/50 dark:border-emerald-900/20'
-                                                            : 'bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-300'
-                                                            }`}>
-                                                            <div className={`w-1 h-1 rounded-full ${item.status === 'نشط' ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-                                                            {item.status || 'نشط'}
-                                                        </span>
+                                                        {selectedReport === 'members-by-goal' ? (
+                                                            <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1 rounded-lg">
+                                                                {item.count} عضو
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black border ${item.status === 'نشط'
+                                                                ? 'bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 border-emerald-100/50 dark:border-emerald-900/20'
+                                                                : 'bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-300'
+                                                                }`}>
+                                                                <div className={`w-1 h-1 rounded-full ${item.status === 'نشط' ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                                                                {item.status || 'نشط'}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-2 text-center text-[10px] font-black text-slate-400 font-mono border-l border-gray-100/20 last:border-l-0">
-                                                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString('ar-EG') : '---'}
+                                                        {selectedReport === 'members-by-goal' ? item.status : (item.createdAt ? new Date(item.createdAt).toLocaleDateString('ar-EG') : '---')}
                                                     </td>
                                                     <td className="px-6 py-2 border-l border-gray-100/20 last:border-l-0">
                                                         <div className="flex items-center justify-center">
-                                                            <button className="w-8 h-8 flex items-center justify-center bg-slate-50 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-400 rounded-xl transition-all duration-300 border border-gray-300 dark:border-slate-700 shadow-sm group/btn" title="فتح الملف">
+                                                            <button className="w-8 h-8 flex items-center justify-center bg-slate-50 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-400 rounded-xl transition-all duration-300 border border-gray-300 dark:border-slate-700 shadow-sm group/btn">
                                                                 <ArrowRightCircle className="w-4 h-4 group-hover/btn:-rotate-45 transition-transform" />
                                                             </button>
                                                         </div>

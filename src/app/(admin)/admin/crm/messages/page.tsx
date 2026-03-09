@@ -503,7 +503,15 @@ export default function MessagesPage() {
                 )}
             </AnimatePresence>
 
-            <DeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={confirmDelete} title="حذف الرسالة" message="هل أنت متأكد من رغبتك في حذف هذه الرسالة نهائياً؟" />
+            <DeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="حذف الرسالة"
+                message="هل أنت متأكد من رغبتك في حذف هذه الرسالة نهائياً؟"
+                confirmText="نعم، حذف الرسالة"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
+            />
         </div>
     );
 }

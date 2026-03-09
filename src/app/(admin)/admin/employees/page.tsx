@@ -438,6 +438,8 @@ export default function EmployeesPage() {
                 onConfirm={confirmDelete}
                 title="حذف الموظف"
                 message="هل أنت متأكد من رغبتك في حذف هذا الموظف؟ سيؤدي ذلك لإزالته نهائياً من سجلات النظام وصلاحيات الوصول."
+                confirmText="نعم، حذف الموظف"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

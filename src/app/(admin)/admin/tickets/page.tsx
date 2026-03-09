@@ -572,6 +572,8 @@ export default function DailyTicketsPage() {
                     onConfirm={confirmDelete}
                     title="حذف سجل التذكرة"
                     message="هل أنت متأكد من حذف هذا السجل؟ لن يختفي المبلغ من الإيرادات ولكن سيختفي من قائمة الحضور."
+                    confirmText="نعم، حذف التذكرة"
+                    icon={<Trash2 className="w-6 h-6 relative z-10" />}
                 />
 
                 <style jsx global>{`

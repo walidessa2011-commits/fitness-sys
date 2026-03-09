@@ -512,6 +512,8 @@ export default function RevenuesPage() {
                 message={deleteMode === 'entry'
                     ? "هل أنت متأكد من رغبتك في حذف هذا الإيراد؟ لا يمكن التراجع عن هذه العملية."
                     : "هل أنت متأكد من حذف هذا التصنيف؟ قد يؤثر ذلك على تجميع البيانات المرتبطة به."}
+                confirmText={deleteMode === 'entry' ? "نعم، حذف الإيراد" : "نعم، حذف التصنيف"}
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

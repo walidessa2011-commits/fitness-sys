@@ -340,6 +340,8 @@ export default function PromotionsPage() {
                 onConfirm={confirmDelete}
                 title="حذف العرض الترويجي"
                 message="هل أنت متأكد من رغبتك في حذف هذا العرض الترويجي؟ لا يمكن التراجع عن هذا الإجراء."
+                confirmText="نعم، حذف العرض"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

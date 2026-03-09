@@ -536,6 +536,8 @@ export default function SubscriptionPricesPage() {
                 onConfirm={confirmDelete}
                 title="حذف تسعيرة الاشتراك"
                 message="هل أنت متأكد من رغبتك في حذف هذه التسعيرة؟ لا يمكن التراجع عن هذا الإجراء."
+                confirmText="نعم، حذف التسعيرة"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

@@ -46,6 +46,7 @@ export function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean
     const [salesReps, setSalesReps] = useState<any[]>([]);
     const [clubSettings, setClubSettings] = useState<any>(null);
     const [nextMemberCode, setNextMemberCode] = useState<string>('');
+    const [availableGoals, setAvailableGoals] = useState<any[]>([]);
 
     const [formData, setFormData] = useState<any>({
         name: '',
@@ -91,12 +92,14 @@ export function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean
     async function loadInitialData() {
         try {
             const clubId = await db.getClubId();
-            const [staff, settingsData, membersData] = await Promise.all([
+            const [staff, settingsData, membersData, goalsData] = await Promise.all([
                 db.getAll('employees'),
                 db.getAll('club_settings'),
-                db.getAll('members')
+                db.getAll('members'),
+                db.getAll('member_goals')
             ]);
             setSalesReps(staff || []);
+            setAvailableGoals(goalsData || []);
 
             // Load club settings for this club
             const mySettings = settingsData?.find((s: any) => s.clubId === clubId || s.club_id === clubId);
@@ -106,16 +109,16 @@ export function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean
             const codeStart = parseInt(mySettings?.customer_code_start || mySettings?.customerCodeStart || '1000');
             const existingMembers = (membersData || []).filter((m: any) => m.clubId === clubId || m.club_id === clubId);
 
-            // Find the highest existing membership number
-            let maxCode = codeStart - 1;
-            existingMembers.forEach((m: any) => {
-                const num = parseInt(m.membershipNumber || m.membership_number || '0');
-                if (num >= codeStart && num > maxCode) {
-                    maxCode = num;
-                }
-            });
-            const nextCode = (maxCode + 1).toString();
-            setNextMemberCode(nextCode);
+            // Create a set of all used membership numbers
+            const usedCodes = new Set(existingMembers.map((m: any) => parseInt(m.membershipNumber || m.membership_number || '0')));
+
+            // Find the first available number starting from codeStart
+            let currentCode = codeStart;
+            while (usedCodes.has(currentCode)) {
+                currentCode++;
+            }
+
+            setNextMemberCode(currentCode.toString());
         } catch (e) {
             console.error("Error loading initial data:", e);
         }
@@ -292,6 +295,7 @@ export function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean
                                             onChange={(val) => setFormData((prev: any) => ({ ...prev, nationality: val }))}
                                             placeholder="اختر الجنسية..."
                                             className="w-full"
+                                            placement="top"
                                         />
                                         <SelectBox label="الجنس" name="gender" value={formData.gender} onChange={handleInputChange} options={['ذكر', 'أنثى']} />
                                         <DateBox label="تاريخ الميلاد" name="birthDate" value={formData.birthDate} onChange={handleInputChange} required={false} />
@@ -401,22 +405,26 @@ export function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean
                                     <div>
                                         <FieldLabel label="أهداف العضو من الانضمام" />
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                            {['تخفيف وزن', 'زيادة وزن', 'لياقة بدنية', 'كمال أجسام'].map(goal => (
+                                            {availableGoals.length > 0 ? availableGoals.map(goalObj => (
                                                 <button
-                                                    key={goal}
+                                                    key={goalObj.id}
                                                     type="button"
-                                                    onClick={() => handleGoalToggle(goal)}
-                                                    className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${formData.goals.includes(goal)
+                                                    onClick={() => handleGoalToggle(goalObj.name)}
+                                                    className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${formData.goals.includes(goalObj.name)
                                                         ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-none translate-y-[-2px]'
                                                         : 'bg-white dark:bg-slate-800 border-gray-50 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:border-blue-200'
                                                         }`}
                                                 >
-                                                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${formData.goals.includes(goal) ? 'bg-white/20' : 'bg-gray-50 dark:bg-slate-900'}`}>
-                                                        <CheckCircle2 className={`w-3.5 h-3.5 ${formData.goals.includes(goal) ? 'text-white' : 'text-gray-300'}`} />
+                                                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${formData.goals.includes(goalObj.name) ? 'bg-white/20' : 'bg-gray-50 dark:bg-slate-900'}`}>
+                                                        <CheckCircle2 className={`w-3.5 h-3.5 ${formData.goals.includes(goalObj.name) ? 'text-white' : 'text-gray-300'}`} />
                                                     </div>
-                                                    <span className="text-[10px] font-black">{goal}</span>
+                                                    <span className="text-[10px] font-black">{goalObj.name}</span>
                                                 </button>
-                                            ))}
+                                            )) : (
+                                                <div className="col-span-full py-4 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest border-2 border-dashed border-gray-100 dark:border-slate-800 rounded-xl">
+                                                    لا توجد أهداف تدريبية مضافة حالياً
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

@@ -484,6 +484,8 @@ export default function AttendancePage() {
                 onConfirm={confirmDelete}
                 title="حذف سجل الحضور"
                 message="هل أنت متأكد من رغبتك في حذف سجل الحضور هذا؟ لا يمكن التراجع عن هذا الإجراء."
+                confirmText="نعم، حذف السجل"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

@@ -387,7 +387,15 @@ export default function WhatsAppAutoPage() {
                 )}
             </AnimatePresence>
 
-            <DeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={confirmDelete} title="حذف الرسالة الآلية" message="هل أنت متأكد من رغبتك في حذف هذا القالب؟ سيتوقف الإرسال الآلي لهذا الحدث." />
+            <DeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="حذف الرسالة الآلية"
+                message="هل أنت متأكد من رغبتك في حذف هذا القالب؟ سيتوقف الإرسال الآلي لهذا الحدث."
+                confirmText="نعم، حذف القالب"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
+            />
         </div>
     );
 }

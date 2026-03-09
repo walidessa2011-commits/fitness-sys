@@ -376,6 +376,8 @@ export default function AccessDevicesPage() {
                 onConfirm={confirmDelete}
                 title="حذف جهاز الوصول"
                 message="هل أنت متأكد من رغبتك في حذف هذا الجهاز؟ سيتم فصل الاتصال به تماماً."
+                confirmText="نعم، حذف الجهاز"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );

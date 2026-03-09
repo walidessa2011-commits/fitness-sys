@@ -460,6 +460,8 @@ export default function CoachesPage() {
                 onConfirm={confirmDelete}
                 title="حذف بيانات المدرب"
                 message="هل أنت متأكد من رغبتك في حذف بيانات هذا المدرب؟ سيتم إزالته من سجلات الموظفين نهائياً."
+                confirmText="نعم، حذف المدرب"
+                icon={<Trash2 className="w-6 h-6 relative z-10" />}
             />
         </div>
     );
