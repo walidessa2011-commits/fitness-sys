@@ -847,7 +847,7 @@ export default function SubscriptionsPage() {
                                                 >
                                                     <option value="">-- اختر الباقة --</option>
                                                     {prices.map(p => (
-                                                        <option key={p.id} value={p.id}>{p.subscriptionName || getActivityName(p.activitiesList || p.activityId)} | {getTypeName(p.typeId)} | {p.price} ريال</option>
+                                                        <option key={p.id} value={p.id}>{p.subscriptionName || getActivityName((p.activitiesList && p.activitiesList.length > 0) ? p.activitiesList : p.activityId)} | {getTypeName(p.typeId)} | {p.price} ريال</option>
                                                     ))}
                                                 </select>
                                             </div>

@@ -92,7 +92,7 @@ export const db = {
 
             // Strict data isolation for Supabase Query
             if (!isSuperAdmin && currentClubId) {
-                if (!['roles', 'system_settings', 'clubs', 'revenue_types', 'expense_types'].includes(dbTable)) {
+                if (!['roles', 'system_settings', 'clubs', 'revenue_types', 'expense_types', 'member_goals'].includes(dbTable)) {
                     query = query.eq('club_id', currentClubId)
                 }
             }
