@@ -360,7 +360,7 @@ export default function SubscriptionPricesPage() {
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 w-3.5 h-3.5" />
                                         <input
                                             type="number"
-                                            step="0.01"
+                                            step="any"
                                             required
                                             value={formData.price}
                                             onChange={e => setFormData({ ...formData, price: e.target.value })}
@@ -384,6 +384,7 @@ export default function SubscriptionPricesPage() {
                                     <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1 pr-2">الحد الأقصى للخصم : *</label>
                                     <input
                                         type="number"
+                                        step="any"
                                         required
                                         value={formData.maxDiscount}
                                         onChange={e => setFormData({ ...formData, maxDiscount: e.target.value })}
@@ -459,6 +460,7 @@ export default function SubscriptionPricesPage() {
                                         </select>
                                         <input
                                             type="number"
+                                            step="any"
                                             placeholder="قيمة رسوم الإيقاف"
                                             value={formData.pauseFee}
                                             onChange={e => setFormData({ ...formData, pauseFee: e.target.value })}
@@ -491,6 +493,7 @@ export default function SubscriptionPricesPage() {
                                         </select>
                                         <input
                                             type="number"
+                                            step="any"
                                             placeholder="قيمة رسوم التنازل"
                                             value={formData.transferFee}
                                             onChange={e => setFormData({ ...formData, transferFee: e.target.value })}

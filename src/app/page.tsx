@@ -1,9 +1,9 @@
-import LandingPage from "@/components/LandingPage";
+import NewProposedLanding from "@/components/NewProposedLanding";
 
 export default function Home() {
   return (
     <main>
-      <LandingPage />
+      <NewProposedLanding />
     </main>
   );
 }

@@ -175,7 +175,12 @@ export default function SubscriptionsPage() {
         });
     }, [selectedPriceId, startDate, discountPercent, prices, types, vatPercent, selectedPromotionId, promotions]);
 
-    const getActivityName = (id: string) => activities.find(a => a.id === id)?.name || 'غير معروف';
+    const getActivityName = (idOrIds: any) => {
+        if (!idOrIds || (Array.isArray(idOrIds) && idOrIds.length === 0)) return 'غير معروف';
+        const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
+        const names = ids.map(id => activities.find(a => a.id === id)?.name).filter(Boolean);
+        return names.length > 0 ? names.join(' + ') : 'غير معروف';
+    };
     const getTypeName = (id: string) => types.find(t => t.id === id)?.name || 'غير معروف';
 
     const filteredMembers = members.filter(m =>
@@ -205,7 +210,7 @@ export default function SubscriptionsPage() {
             const newSub = {
                 memberId: selectedMember.id,
                 priceId: selectedPriceId,
-                activityId: priceRecord?.activityId,
+                activityId: (priceRecord?.activitiesList && priceRecord.activitiesList.length > 0) ? priceRecord.activitiesList[0] : priceRecord?.activityId,
                 typeId: priceRecord?.typeId,
                 coachId: selectedCoachId || null,
                 promotionId: selectedPromotionId || null,
@@ -546,8 +551,8 @@ export default function SubscriptionsPage() {
                                                             <td className="px-2 py-1.5 text-center border-l border-gray-100/20">
                                                                 <div className="flex justify-center items-center">
                                                                     <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black ${sub.status === 'موقوف' ? 'bg-orange-500 text-white shadow-sm' :
-                                                                            (sub.status === 'ملغي' || (sub.endDate && sub.endDate < new Date().toISOString().split('T')[0]) ? 'bg-rose-500 text-white shadow-sm' :
-                                                                                'bg-emerald-500 text-white shadow-sm')
+                                                                        (sub.status === 'ملغي' || (sub.endDate && sub.endDate < new Date().toISOString().split('T')[0]) ? 'bg-rose-500 text-white shadow-sm' :
+                                                                            'bg-emerald-500 text-white shadow-sm')
                                                                         }`}>
                                                                         {sub.status === 'موقوف' ? 'موقوف' : (sub.status === 'ملغي' || (sub.endDate && sub.endDate < new Date().toISOString().split('T')[0]) ? 'منتهي' : (sub.status || 'نشط'))}
                                                                     </span>
@@ -842,7 +847,7 @@ export default function SubscriptionsPage() {
                                                 >
                                                     <option value="">-- اختر الباقة --</option>
                                                     {prices.map(p => (
-                                                        <option key={p.id} value={p.id}>{getActivityName(p.activityId)} | {getTypeName(p.typeId)} | {p.price} ريال</option>
+                                                        <option key={p.id} value={p.id}>{p.subscriptionName || getActivityName(p.activitiesList || p.activityId)} | {getTypeName(p.typeId)} | {p.price} ريال</option>
                                                     ))}
                                                 </select>
                                             </div>

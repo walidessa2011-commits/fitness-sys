@@ -106,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [time, setTime] = useState('');
     const [clubName, setClubName] = useState('');
     const [clubLogo, setClubLogo] = useState('');
-    const [programName, setProgramName] = useState('FITNESS CLUB KSA');
+    const [programName, setProgramName] = useState('FITNESS CLUB SO');
     const [licenseDays, setLicenseDays] = useState<number | null>(null);
     const [expiryDate, setExpiryDate] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -155,7 +155,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             const settings: any = await db.getAll('system_settings');
             if (settings && settings.length > 0) {
-                setProgramName(settings[0].siteName);
+                setProgramName(settings[0].siteName || 'FITNESS CLUB SO');
             }
         };
 

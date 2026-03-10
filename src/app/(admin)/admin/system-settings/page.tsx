@@ -234,13 +234,13 @@ export default function SystemSettingsPage() {
                                 type="button"
                                 onClick={() => setSettings((prev: any) => ({
                                     ...prev,
-                                    themeHeaderFrom: '',
-                                    themeHeaderTo: '',
-                                    themeHeaderBg: '',
-                                    themeTableBg: '',
-                                    themeTableText: '',
-                                    themeButtonBg: '',
-                                    themeButtonText: ''
+                                    themeHeaderBg: '#1e40af',
+                                    themeHeaderFrom: '#1e3a8a',
+                                    themeHeaderTo: '#2563eb',
+                                    themeTableBg: '#f8fafc',
+                                    themeTableText: '#475569',
+                                    themeButtonBg: '#2563eb',
+                                    themeButtonText: '#ffffff'
                                 }))}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:hover:bg-rose-900/40 rounded-lg text-[10px] font-black transition-colors"
                             >
@@ -248,9 +248,10 @@ export default function SystemSettingsPage() {
                                 إستعادة الألوان الأساسية
                             </button>
                         </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <ColorPickerField label="لون الهيدر الأيمن" value={settings.themeHeaderFrom} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeHeaderFrom: v }))} />
-                            <ColorPickerField label="لون الهيدر الأيسر" value={settings.themeHeaderTo} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeHeaderTo: v }))} />
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <ColorPickerField label="لون الهيدر الرئيسي" value={settings.themeHeaderBg} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeHeaderBg: v }))} />
+                            <ColorPickerField label="لون الهيدر الأيمن (تدرج)" value={settings.themeHeaderFrom} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeHeaderFrom: v }))} />
+                            <ColorPickerField label="لون الهيدر الأيسر (تدرج)" value={settings.themeHeaderTo} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeHeaderTo: v }))} />
                             <ColorPickerField label="لون خلفية ترويسة الجداول" value={settings.themeTableBg} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeTableBg: v }))} />
                             <ColorPickerField label="لون خط ترويسة الجداول" value={settings.themeTableText} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeTableText: v }))} />
                             <ColorPickerField label="لون أزرار النظام" value={settings.themeButtonBg} onChange={(v) => setSettings((prev: any) => ({ ...prev, themeButtonBg: v }))} />

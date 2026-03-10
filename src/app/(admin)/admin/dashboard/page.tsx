@@ -210,15 +210,15 @@ export default function AdminDashboard() {
                 <div className="lg:col-span-8 flex flex-col gap-2.5">
                     {/* Data Table Section */}
                     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-300 dark:border-slate-800 overflow-hidden flex flex-col h-[500px]">
-                        <div className="py-2 px-5 bg-gradient-to-r from-red-600 to-rose-600 text-white flex items-center justify-between">
+                        <div className="py-1.5 px-5 bg-slate-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-md shadow-inner"><AlertTriangle className="w-4 h-4" /></div>
+                                <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-600 shadow-inner"><AlertTriangle className="w-4 h-4" /></div>
                                 <div>
-                                    <h3 className="text-xs font-black uppercase tracking-tighter">اشتراكات تنتهي قريباً</h3>
-                                    <p className="text-[8px] text-red-100 font-bold uppercase tracking-widest mt-0.5">أعضاء متبقي لهم أقل من 5 أيام</p>
+                                    <h3 className="text-[11px] font-black uppercase tracking-tighter text-slate-800 dark:text-white">اشتراكات تنتهي قريباً</h3>
+                                    <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">أعضاء متبقي لهم أقل من 5 أيام</p>
                                 </div>
                             </div>
-                            <div className="bg-white/20 px-2 py-0.5 rounded-lg border border-white/10 uppercase font-black text-[9px] tracking-tighter shadow-sm text-center">
+                            <div className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-gray-200 dark:border-slate-700 uppercase font-black text-[9px] tracking-tighter shadow-sm text-center text-slate-500 dark:text-slate-400">
                                 {expiringSubs.length} مشترك
                             </div>
                         </div>
@@ -289,7 +289,7 @@ export default function AdminDashboard() {
 
                     <div className="bg-slate-900 p-6 rounded-2xl text-white relative overflow-hidden shadow-xl shadow-blue-900/10">
                         <div className="relative z-10 flex flex-col gap-1">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1">FITNESS CLUB v3.5</h4>
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1">FITNESS CLUB SO v3.5</h4>
                             <p className="text-sm font-black italic">نظام إدارة فائق السرعة</p>
                             <p className="text-[9px] font-bold opacity-60 mt-2 leading-relaxed">تتم مزامنة البيانات كل 60 ثانية لضمان دقة التقارير الحية.</p>
                         </div>

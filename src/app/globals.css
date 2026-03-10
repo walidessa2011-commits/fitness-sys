@@ -371,3 +371,48 @@ body {
 .dark .table-row-premium:hover td {
   color: #818cf8;
 }
+
+/* 
+ * 🏆 Advanced UI Glossy & Glassmorphism System
+ */
+.glass-card {
+  @apply bg-white/70 dark:bg-slate-950/40 backdrop-blur-xl border border-white/40 dark:border-slate-800/50 shadow-2xl;
+}
+
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.text-glow-blue {
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+.icon-box-premium {
+  @apply w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500;
+  background: linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to));
+}
+
+.premium-shadow {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+}
+
+.dark .premium-shadow {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+/* Scrollbar Style */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors;
+}

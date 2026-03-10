@@ -285,7 +285,7 @@ export default function TicketTypesPage() {
                                         <div className="relative">
                                             <input
                                                 type="number"
-                                                step="0.01"
+                                                step="any"
                                                 required
                                                 placeholder="0.00"
                                                 value={form.price}
