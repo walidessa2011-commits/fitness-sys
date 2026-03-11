@@ -40,7 +40,7 @@ interface GeneralSettings {
 export default function GeneralSettings() {
     const [settings, setSettings] = useState<GeneralSettings>({
         id: '1',
-        siteName: 'FITNESS CLUB KSA',
+        siteName: 'Fitness Club Solutions',
         siteDescription: 'أفضل نادي دائم للياقتك وبناء جسمك',
         contactEmail: 'info@fitnessclub.ksa',
         contactPhone: '+966 50 000 0000',

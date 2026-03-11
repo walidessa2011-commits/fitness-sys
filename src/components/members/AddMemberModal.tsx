@@ -153,9 +153,14 @@ export function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean
             // Use sequential membership number from club settings
             const membershipNumber = nextMemberCode || `${Math.floor(1000 + Math.random() * 9000)}`;
             const clubId = await db.getClubId();
+
+            // Auto-generate a 6-digit member password for member portal login
+            const memberPassword = Math.floor(100000 + Math.random() * 900000).toString();
+
             const dataToAdd = {
                 ...formData,
                 membershipNumber,
+                memberPassword,
                 clubId: clubId || '00000000-0000-0000-0000-000000000001',
                 salesRep: formData.salesRep ? salesReps.find(s => s.name === formData.salesRep)?.id : null
             };

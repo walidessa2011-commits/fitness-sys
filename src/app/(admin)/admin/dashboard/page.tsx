@@ -289,7 +289,7 @@ export default function AdminDashboard() {
 
                     <div className="bg-slate-900 p-6 rounded-2xl text-white relative overflow-hidden shadow-xl shadow-blue-900/10">
                         <div className="relative z-10 flex flex-col gap-1">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1">FITNESS CLUB SO v3.5</h4>
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1">Fitness Club Solutions v3.5</h4>
                             <p className="text-sm font-black italic">نظام إدارة فائق السرعة</p>
                             <p className="text-[9px] font-bold opacity-60 mt-2 leading-relaxed">تتم مزامنة البيانات كل 60 ثانية لضمان دقة التقارير الحية.</p>
                         </div>

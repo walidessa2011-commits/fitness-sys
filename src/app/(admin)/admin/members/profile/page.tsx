@@ -309,6 +309,28 @@ export default function MemberProfilePage() {
                                 <SmallInfoRow label="العنوان" value={member.address || '---'} icon={<MapPin className="w-3 h-3 text-rose-400" />} />
                             </div>
 
+                            {/* Member Portal Login Credentials */}
+                            <div className="mt-6 pt-5 border-t border-gray-200 dark:border-slate-800">
+                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <Shield className="w-3 h-3 text-cyan-500" /> بيانات دخول بوابة الأعضاء
+                                </div>
+                                <div className="bg-gradient-to-br from-cyan-50/50 to-blue-50/30 dark:from-cyan-900/10 dark:to-blue-900/10 p-4 rounded-2xl border border-cyan-100 dark:border-cyan-900/30 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-cyan-600/60 dark:text-cyan-500/50 uppercase tracking-widest">رقم الهوية</span>
+                                        <span className="text-[11px] font-black text-slate-700 dark:text-white font-mono tracking-wider">{member.nationalId || '---'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-cyan-600/60 dark:text-cyan-500/50 uppercase tracking-widest">كلمة المرور</span>
+                                        <span className="text-[11px] font-black text-slate-700 dark:text-white font-mono tracking-[0.15em] bg-white dark:bg-slate-800 px-3 py-1 rounded-lg border border-cyan-200 dark:border-slate-700 select-all cursor-pointer">
+                                            {member.memberPassword || '---'}
+                                        </span>
+                                    </div>
+                                    <p className="text-[8px] font-bold text-cyan-500/50 dark:text-cyan-600/40 text-center mt-2">
+                                        يتم منح هذه البيانات للعضو للدخول إلى بوابة الأعضاء
+                                    </p>
+                                </div>
+                            </div>
+
                             <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-800">
                                 <div className="flex items-center justify-between mb-4">
                                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">بطاقة الدخول الرقمية</span>

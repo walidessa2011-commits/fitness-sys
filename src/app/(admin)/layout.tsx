@@ -106,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [time, setTime] = useState('');
     const [clubName, setClubName] = useState('');
     const [clubLogo, setClubLogo] = useState('');
-    const [programName, setProgramName] = useState('FITNESS CLUB SO');
+    const [programName, setProgramName] = useState('Fitness Club Solutions');
     const [licenseDays, setLicenseDays] = useState<number | null>(null);
     const [expiryDate, setExpiryDate] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -155,7 +155,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             const settings: any = await db.getAll('system_settings');
             if (settings && settings.length > 0) {
-                setProgramName(settings[0].siteName || 'FITNESS CLUB SO');
+                setProgramName(settings[0].siteName || 'Fitness Club Solutions');
             }
         };
 
@@ -348,11 +348,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                     {/* Logo */}
                     <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 md:px-6 border-l border-white/10 hover:bg-white/5 transition-colors">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white/20 flex items-center justify-center text-white overflow-hidden shrink-0">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white flex items-center justify-center text-white overflow-hidden shrink-0">
                             {clubLogo ? (
                                 <img src={clubLogo} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
-                                <Dumbbell className="w-5 h-5 md:w-6 md:h-6" />
+                                <img src="/logo.png" alt="Logo" className="w-7 h-7 object-contain" />
                             )}
                         </div>
                         <div className="block">
@@ -722,8 +722,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         >
                             <div className="bg-[#1e40af] p-6 text-white shrink-0 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center overflow-hidden">
-                                        {clubLogo ? <img src={clubLogo} alt="Logo" className="w-full h-full object-cover" /> : <Dumbbell className="w-6 h-6" />}
+                                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden">
+                                        {clubLogo ? <img src={clubLogo} alt="Logo" className="w-full h-full object-cover" /> : <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />}
                                     </div>
                                     <div>
                                         <div className="text-sm font-black uppercase tracking-tight">{clubName || programName}</div>
@@ -893,8 +893,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Bottom Program Footer */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-t border-gray-200 dark:border-slate-800 h-10 flex items-center px-4 md:px-6 z-[100] shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] print:hidden">
                 <div className="flex-1 flex items-center gap-2 overflow-hidden">
-                    <div className="w-6 h-6 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0">
-                        <Dumbbell className="w-3.5 h-3.5" />
+                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center text-blue-600 shrink-0">
+                        <img src="/logo.png" alt="Logo" className="w-4 h-4 object-contain" />
                     </div>
                     <span className="text-[10px] md:text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate">{programName}</span>
                 </div>

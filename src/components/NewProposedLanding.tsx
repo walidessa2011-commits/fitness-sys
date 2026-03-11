@@ -81,19 +81,24 @@ export default function NewProposedLanding() {
                 }`}>
                 <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-700 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
-                            <Dumbbell className="text-white w-6 h-6" />
-                        </div>
+                        <Link href="/" className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-xl shadow-blue-500/10 active:scale-95 transition-all overflow-hidden border border-slate-100">
+                            <img src="/logo.png" alt="Fitness Club Solutions Logo" className="w-8 h-8 object-contain" />
+                        </Link>
                         <div className="leading-tight">
-                            <div className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">FITNESS CLUB SO</div>
+                            <div className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">Fitness Club Solutions</div>
                             <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">المستقبل في إدارة النوادي</div>
                         </div>
                     </div>
 
                     <nav className="hidden xl:flex items-center gap-10">
-                        {['الرئيسية', 'المميزات', 'الخدمات', 'الرؤية', 'تواصل معنا'].map((item, i) => (
-                            <Link key={i} href="#" className="text-[13px] font-black text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all relative group">
-                                {item}
+                        {[
+                            { label: 'الرئيسية', href: '#home' },
+                            { label: 'المميزات', href: '#features' },
+                            { label: 'الرؤية', href: '#vision' },
+                            { label: 'تواصل معنا', href: '#contact' }
+                        ].map((item, i) => (
+                            <Link key={i} href={item.href} className="text-[13px] font-black text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all relative group">
+                                {item.label}
                                 <span className="absolute -bottom-1 right-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full rounded-full"></span>
                             </Link>
                         ))}
@@ -104,6 +109,10 @@ export default function NewProposedLanding() {
                             {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
                         </button>
 
+                        <Link href="/member/login" className="hidden sm:flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs hover:shadow-2xl hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all">
+                            <Users className="w-4 h-4" />
+                            <span>بوابة الأعضاء</span>
+                        </Link>
                         <Link href="/auth/login" className="hidden sm:flex items-center gap-2 px-6 py-3 bg-slate-950 dark:bg-white text-white dark:text-slate-950 rounded-2xl font-black text-xs hover:shadow-2xl hover:scale-105 active:scale-95 transition-all">
                             <LogIn className="w-4 h-4" />
                             <span>دخول النظام</span>
@@ -113,7 +122,7 @@ export default function NewProposedLanding() {
             </header>
 
             {/* 🔥 Hero Spotlight */}
-            <section className="relative pt-32 lg:pt-52 pb-24 overflow-hidden">
+            <section id="home" className="relative pt-32 lg:pt-52 pb-24 overflow-hidden">
                 <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/10 dark:bg-blue-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-600/10 dark:bg-indigo-600/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
@@ -231,7 +240,7 @@ export default function NewProposedLanding() {
             </section>
 
             {/* 🎯 Services Ecosystem */}
-            <section className="py-20 bg-slate-50 dark:bg-slate-950/50">
+            <section id="features" className="py-20 bg-slate-50 dark:bg-slate-950/50">
                 <div className="max-w-7xl mx-auto px-6 lg:px-12">
                     <div className="text-center max-w-3xl mx-auto mb-24">
                         <span className="text-[11px] font-black text-blue-600 uppercase tracking-[0.3em] mb-4 block">المنظومة المتكاملة</span>
@@ -281,7 +290,7 @@ export default function NewProposedLanding() {
             </section>
 
             {/* 👁️ Vision & Values */}
-            <section className="py-20 relative overflow-hidden">
+            <section id="vision" className="py-20 relative overflow-hidden">
                 <div className="absolute inset-0 bg-blue-600 pointer-events-none opacity-[0.03] dark:opacity-[0.05]" />
                 <div className="max-w-7xl mx-auto px-6 lg:px-12">
                     <div className="grid lg:grid-cols-2 gap-20 items-center">
@@ -289,7 +298,7 @@ export default function NewProposedLanding() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-4 pt-12">
                                     <div className="aspect-[4/5] bg-slate-900 rounded-[2rem] overflow-hidden shadow-2xl relative group">
-                                        <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1470&auto=format&fit=crop" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="Gym" />
+                                        <img src="/vision-gym-1.png" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="Excellent Gym Environment" />
                                         <div className="absolute inset-0 bg-blue-600/20 mix-blend-overlay" />
                                     </div>
                                     <div className="h-32 bg-blue-600 rounded-[2rem] flex items-center justify-center p-8 text-white shadow-2xl shadow-blue-500/20">
@@ -299,7 +308,7 @@ export default function NewProposedLanding() {
                                 <div className="space-y-4">
                                     <div className="h-40 bg-slate-100 dark:bg-slate-900 rounded-[2rem] border border-slate-300 dark:border-slate-800" />
                                     <div className="aspect-[4/6] bg-slate-900 rounded-[2rem] overflow-hidden shadow-2xl relative group">
-                                        <img src="https://images.unsplash.com/photo-1593079831268-3381b0db4a77?q=80&w=1469&auto=format&fit=crop" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="Gym Interior" />
+                                        <img src="/vision-gym-2.png" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="Modern Gym Interior" />
                                         <div className="absolute inset-0 bg-indigo-600/20 mix-blend-overlay" />
                                     </div>
                                 </div>
@@ -407,7 +416,7 @@ export default function NewProposedLanding() {
             </section>
 
             {/* 📞 Final CTA */}
-            <section className="py-24 px-6">
+            <section id="contact" className="py-24 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="bg-blue-600 rounded-[3rem] p-12 lg:p-24 relative overflow-hidden text-center text-white shadow-2xl shadow-blue-600/40">
                         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 blur-[100px] rounded-full -mr-48 -mt-48" />
@@ -457,10 +466,10 @@ export default function NewProposedLanding() {
                     <div className="grid lg:grid-cols-4 gap-16 mb-20 border-b border-white/5 pb-20">
                         <div className="col-span-1 lg:col-span-1 flex flex-col items-center lg:items-start text-center lg:text-right">
                             <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center">
-                                    <Dumbbell className="text-white w-6 h-6" />
+                                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center">
+                                    <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
                                 </div>
-                                <div className="text-2xl font-black tracking-tighter">FITNESS CLUB SO</div>
+                                <div className="text-2xl font-black tracking-tighter">Fitness Club Solutions</div>
                             </div>
                             <p className="text-slate-500 text-sm leading-relaxed mb-8">نظام متكامل يخدم قطاع النوادي الرياضية في المملكة العربية السعودية بأعلى معايير الجودة والأمان.</p>
                             <div className="flex gap-4">
@@ -497,7 +506,7 @@ export default function NewProposedLanding() {
                         </div>
                     </div>
                     <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-slate-500 text-xs font-bold uppercase tracking-widest">
-                        <span>© 2026 FITNESS CLUB | جميع الحقوق محفوظة</span>
+                        <span>© 2026 Fitness Club Solutions | جميع الحقوق محفوظة</span>
                         <div className="flex gap-8">
                             <Link href="#" className="hover:text-white transition-colors">الشروط والأحكام</Link>
                             <Link href="#" className="hover:text-white transition-colors">سياسة الخصوصية</Link>

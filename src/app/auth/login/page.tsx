@@ -110,7 +110,7 @@ export default function LoginPage() {
                             <Dumbbell className="text-white w-7 h-7" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-extrabold mb-1">FITNESS CLUB SO</h2>
+                            <h2 className="text-xl font-extrabold mb-1">Fitness Club Solutions</h2>
                             <p className="text-blue-100 text-[10px] font-bold opacity-80 uppercase tracking-widest">نظام إدارة الأندية المتكامل</p>
                         </div>
                     </div>
@@ -231,7 +231,7 @@ export default function LoginPage() {
                         </form>
 
                         <div className="mt-8 pt-6 border-t border-gray-100 dark:border-slate-800 text-center">
-                            <p className="text-[9px] font-bold text-gray-400 dark:text-slate-600 mb-4 uppercase tracking-[0.2em]">POWERED BY FITNESS CLUB SO TECHNOLOGY</p>
+                            <p className="text-[9px] font-bold text-gray-400 dark:text-slate-600 mb-4 uppercase tracking-[0.2em]">POWERED BY Fitness Club Solutions TECHNOLOGY</p>
                             <button
                                 onClick={() => router.push('/')}
                                 className="inline-flex items-center gap-2 text-[10px] font-black text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors uppercase tracking-widest"

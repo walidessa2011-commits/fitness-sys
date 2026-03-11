@@ -11,7 +11,7 @@ const tajawal = Tajawal({
 import AlertSystemProvider from "./AlertSystemProvider";
 
 export const metadata: Metadata = {
-  title: "FITNESS CLUB - منصة إدارة النوادي الرياضية",
+  title: "Fitness Club Solutions - منصة إدارة النوادي الرياضية",
   description: "النظام الأول في المملكة لإدارة النوادي الرياضية والاشتراكات",
 };
 
